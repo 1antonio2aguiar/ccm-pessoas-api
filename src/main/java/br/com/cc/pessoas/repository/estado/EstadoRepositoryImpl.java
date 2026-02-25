@@ -22,6 +22,8 @@ public class EstadoRepositoryImpl implements EstadoRepositoryQuery {
         CriteriaQuery<Estado> criteria = builder.createQuery(Estado.class);
         Root<Estado> root = criteria.from(Estado.class);
 
+        root.fetch("pais", JoinType.INNER);
+        
         List<Predicate> predicates = new ArrayList<>();
 
         if (filter.getId() != null) {

@@ -15,6 +15,8 @@ public class BairroDTO {
     private String nomeAbreviado;
 
     private Long distritoId;
+    private String nomeDistrito;
+
     private Long cidadeId;
     private String nomeCidade;
 
@@ -24,6 +26,7 @@ public class BairroDTO {
                 bairro.getNome(),
                 bairro.getNomeAbreviado(),
                 bairro.getDistrito().getId(),
+                bairro.getDistrito().getNome(),
                 bairro.getDistrito().getCidade().getId(),
                 bairro.getDistrito().getCidade().getNome()
         );

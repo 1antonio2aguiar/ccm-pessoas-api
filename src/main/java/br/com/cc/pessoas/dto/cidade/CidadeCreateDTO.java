@@ -14,11 +14,8 @@ public record CidadeCreateDTO(
         String nome,
 
         @Size(max = 20)
-        String sigla,
+        String sigla
 
-        Long codigoSicom,
-        Long codigoIbge,
-        Long codigoInep
 ) {
 
     public String getNome() {

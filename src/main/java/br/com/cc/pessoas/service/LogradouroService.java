@@ -24,6 +24,8 @@ public class LogradouroService {
 
     @Autowired
     private TipoLogradouroRepository tipoLogradouroRepository;
+    @Autowired
+    private TituloPatenteRepository tituloPatenteRepository;
 
     public List<LogradouroDTO> listar(LogradouroFilter filter) {
         return logradouroRepository.filtrar(filter)

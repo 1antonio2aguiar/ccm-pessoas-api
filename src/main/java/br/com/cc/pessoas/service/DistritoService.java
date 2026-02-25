@@ -55,7 +55,7 @@ public class DistritoService {
                 ));
         return DistritoDTO.fromDistrito(distrito);
     }
-
+    @Transactional
     public Distrito insert(DistritoCreateDTO dto) {
 
         Distrito distrito = new Distrito();
@@ -70,7 +70,7 @@ public class DistritoService {
         distrito.setCidade(cidade);
         return distritoRepository.save(distrito);
     }
-
+    @Transactional
     public Distrito update(Long id, DistritoUpdateDTO dto) {
 
         Distrito distrito = distritoRepository.findById(id)

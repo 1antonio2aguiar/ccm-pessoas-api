@@ -8,7 +8,6 @@ public record EstadoCreateDTO(
 
         @NotNull
         Long paisId,
-
         @NotBlank
         @Size(max = 255)
         String nome,

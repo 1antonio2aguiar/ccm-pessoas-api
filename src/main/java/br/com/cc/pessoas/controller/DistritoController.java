@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -39,7 +40,7 @@ public class DistritoController {
     public ResponseEntity<DistritoDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(distritoService.findDtoById(id));
     }
-
+    @Transactional
     @PostMapping
     public ResponseEntity<DistritoDTO> insert(@Valid @RequestBody DistritoCreateDTO dto) {
 
@@ -53,7 +54,7 @@ public class DistritoController {
 
         return ResponseEntity.created(uri).body(DistritoDTO.fromDistrito(distrito));
     }
-
+    @Transactional
     @PutMapping("/{id}")
     public ResponseEntity<DistritoDTO> update(
             @PathVariable Long id,

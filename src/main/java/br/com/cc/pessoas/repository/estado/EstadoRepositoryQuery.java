@@ -6,6 +6,5 @@ import br.com.cc.pessoas.filter.EstadoFilter;
 import java.util.List;
 
 public interface EstadoRepositoryQuery {
-
     List<Estado> filtrar(EstadoFilter filter);
 }

@@ -35,7 +35,7 @@ public class Logradouro {
     @Column(name = "PREPOSICAO", length = 50)
     private String preposicao;
 
-    @Column(name = "TITULO_PATENTE", length = 100)
+    @JoinColumn(name="TITULO_PATENTE")
     private String tituloPatente;
 
     @Column(name = "NOME_REDUZIDO", length = 100)
