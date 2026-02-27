@@ -17,7 +17,9 @@ public record CepCreateDTO(
         Integer numeroFim,
         String identificacao
 ) {
-
+    public String getIdentificacao() {
+        return identificacao != null ? identificacao.toUpperCase() : "";
+    }
     public String getCep() {
         return cep != null ? cep.replaceAll("\\D", "") : "";
     }

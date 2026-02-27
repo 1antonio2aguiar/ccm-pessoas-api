@@ -66,6 +66,15 @@ public class CepService {
                         new ObjectNotFoundException("CEP não encontrado. Id: " + id));
 
         BeanUtils.copyProperties(dto, cep, "id");
+
+        cep.setLogradouro(
+                logradouroRepository.findById(dto.logradouroId()).get()
+        );
+
+        cep.setBairro(
+                bairroRepository.findById(dto.bairroId()).get()
+        );
+
         return cepRepository.save(cep);
     }
 

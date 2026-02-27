@@ -1,13 +1,13 @@
 package br.com.cc.pessoas.dto.cep;
 
 public record CepUpdateDTO(
-        String cep,
+        Long logradouroId,
+        Long bairroId,
         Integer numeroIni,
         Integer numeroFim,
         String identificacao
 ) {
-
-    public String getCep() {
-        return cep != null ? cep.replaceAll("\\D", "") : "";
+    public String getIdentificacao() {
+        return identificacao != null ? identificacao.toUpperCase() : "";
     }
 }

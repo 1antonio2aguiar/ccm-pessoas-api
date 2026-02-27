@@ -17,16 +17,16 @@ public class CepDTO {
     private String identificacao;
 
     private Long logradouroId;
-    private String nomeLogradouro;
+    private String logradouroNome;
 
     private Long bairroId;
-    private String nomeBairro;
+    private String bairroNome;
 
     private Long distritoId;
-    private String nomeDistrito;
+    private String distritoNome;
 
     private Long cidadeId;
-    private String nomeCidade;
+    private String cidadeNome;
 
     public static CepDTO fromCep(Cep cep) {
         return new CepDTO(

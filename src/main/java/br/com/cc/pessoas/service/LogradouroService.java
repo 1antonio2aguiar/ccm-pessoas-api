@@ -59,6 +59,12 @@ public class LogradouroService {
                 tipoLogradouroRepository.findById(dto.tipoLogradouroId()).get()
         );
 
+        logradouro.setTituloPatente(
+                (dto.getTituloPatente() != null && !dto.getTituloPatente().isBlank())
+                        ? dto.getTituloPatente().trim().toUpperCase()
+                        : null
+        );
+
         return logradouroRepository.save(logradouro);
     }
 

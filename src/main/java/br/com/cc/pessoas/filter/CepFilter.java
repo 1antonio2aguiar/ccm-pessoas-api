@@ -13,6 +13,6 @@ public class CepFilter {
     private Long cidadeId;
     private String cidadeNome;
 
-    private Long bairroId;
-    private Long logradouroId;
+    private String bairroNome;
+    private String logradouroNome;
 }

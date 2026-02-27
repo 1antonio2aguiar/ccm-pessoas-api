@@ -98,12 +98,18 @@ public class CepRepositoryImpl implements CepRepositoryQuery {
             ));
         }
 
-        if (filter.getBairroId() != null) {
-            predicates.add(cb.equal(root.get(Cep_.BAIRRO).get(Bairro_.ID), filter.getBairroId()));
+        if (StringUtils.hasText(filter.getBairroNome())) {
+            predicates.add(cb.like(
+                    cb.lower(root.get(Cep_.BAIRRO).get(Bairro_.NOME)),
+                    "%" + filter.getBairroNome().toLowerCase() + "%"
+            ));
         }
 
-        if (filter.getLogradouroId() != null) {
-            predicates.add(cb.equal(root.get(Cep_.LOGRADOURO).get(Logradouro_.ID), filter.getLogradouroId()));
+        if (StringUtils.hasText(filter.getLogradouroNome())) {
+            predicates.add(cb.like(
+                    cb.lower(root.get(Cep_.LOGRADOURO).get(Logradouro_.NOME)),
+                    "%" + filter.getLogradouroNome().toLowerCase() + "%"
+            ));
         }
 
         return predicates.toArray(new Predicate[0]);
