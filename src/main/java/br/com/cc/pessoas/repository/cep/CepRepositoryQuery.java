@@ -12,4 +12,6 @@ public interface CepRepositoryQuery {
     List<Cep> filtrar(CepFilter filter);
 
     Page<Cep> filtrar(CepFilter filter, Pageable pageable);
+
+    List<String> buscarCepsPorLogradouroBairroNumero(Long logradouroId, Long bairroId, Integer numero);
 }

@@ -14,7 +14,7 @@ public record EstadoCreateDTO(
 
         @NotBlank
         @Size(max = 5)
-        String sigla,
+        String uf,
 
         Long codigoInep
 ) {
@@ -24,6 +24,6 @@ public record EstadoCreateDTO(
     }
 
     public String getSigla() {
-        return sigla != null ? sigla.toUpperCase() : "";
+        return uf != null ? uf.toUpperCase() : "";
     }
 }

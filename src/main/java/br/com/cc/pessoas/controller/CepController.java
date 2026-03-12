@@ -35,6 +35,14 @@ public class CepController {
     public ResponseEntity<CepDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(cepService.findDtoById(id));
     }
+    @GetMapping("/buscar-cep")
+    public List<String> buscarCepPorLogradouroBairroNumero(
+            @RequestParam Long logradouroId,
+            @RequestParam Long bairroId,
+            @RequestParam Integer numero
+    ) {
+        return cepService.buscarCepsPorLogradouroBairroNumero(logradouroId, bairroId, numero);
+    }
 
     @PostMapping
     @Transactional

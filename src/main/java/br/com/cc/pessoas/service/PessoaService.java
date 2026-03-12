@@ -56,7 +56,6 @@ public class PessoaService {
     // ===============================
     @Transactional
     public Pessoa insert(PessoaCreateDTO dto) {
-
         validarTipoPessoa(dto.tipoPessoaId());
 
         // 🔥 Agora você NÃO instancia Pessoa (é abstract).
@@ -75,7 +74,6 @@ public class PessoaService {
     }
 
     private DadosPessoaFisica buildPessoaFisica(PessoaCreateDTO dto) {
-
         DadosPessoaFisica pf = new DadosPessoaFisica();
 
         // base (PESSOAS)
@@ -147,6 +145,10 @@ public class PessoaService {
         Pessoa pessoa = pessoaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada"));
 
+        if (StringUtils.hasText(dto.nome())) {
+            pessoa.setNome(dto.nome().trim());
+        }
+
         if (dto.tipoPessoaId() != null) {
             validarTipoPessoa(dto.tipoPessoaId());
             pessoa.setTipoPessoaId(dto.tipoPessoaId());
@@ -169,7 +171,7 @@ public class PessoaService {
             DadosPessoaFisicaDTO pfDTO = dto.dadosPessoaFisica();
 
             // CPF normalmente não muda, mas se quiser permitir:
-            // if (StringUtils.hasText(pfDTO.cpf())) pf.setCpf(pfDTO.cpf().trim());
+            if (StringUtils.hasText(pfDTO.cpf())) pf.setCpf(pfDTO.cpf().trim());
 
             pf.setNomeSocial(pfDTO.nomeSocial());
             pf.setRaca(pfDTO.raca());
@@ -193,7 +195,7 @@ public class PessoaService {
             DadosPessoaJuridicaDTO pjDTO = dto.dadosPessoaJuridica();
 
             // CNPJ normalmente não muda, mas se quiser permitir:
-            // if (StringUtils.hasText(pjDTO.cnpj())) pj.setCnpj(pjDTO.cnpj().trim());
+            if (StringUtils.hasText(pjDTO.cnpj())) pj.setCnpj(pjDTO.cnpj().trim());
 
             pj.setNomeFantasia(pjDTO.nomeFantasia());
             pj.setObjetoSocial(pjDTO.objetoSocial());

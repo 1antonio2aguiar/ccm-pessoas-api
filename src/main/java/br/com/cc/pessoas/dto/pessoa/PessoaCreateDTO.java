@@ -16,4 +16,8 @@ public record PessoaCreateDTO(
 
         DadosPessoaFisicaDTO dadosPessoaFisica,
         DadosPessoaJuridicaDTO dadosPessoaJuridica
-) {}
+) {
+    public String getNome() {
+        return nome != null ? nome.toUpperCase() : "";
+    }
+}

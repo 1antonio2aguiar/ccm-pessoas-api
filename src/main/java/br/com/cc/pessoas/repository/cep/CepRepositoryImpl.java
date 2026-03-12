@@ -23,12 +23,17 @@ public class CepRepositoryImpl implements CepRepositoryQuery {
         Root<Cep> root = cq.from(Cep.class);
 
         root.fetch(Cep_.LOGRADOURO, JoinType.INNER)
+                .fetch(Logradouro_.TIPO_LOGRADOURO, JoinType.INNER);
+
+        root.fetch(Cep_.LOGRADOURO, JoinType.INNER)
                 .fetch(Logradouro_.DISTRITO, JoinType.INNER)
-                .fetch(Distrito_.CIDADE, JoinType.INNER);
+                .fetch(Distrito_.CIDADE, JoinType.INNER)
+                .fetch(Cidade_.ESTADO, JoinType.INNER);
 
         root.fetch(Cep_.BAIRRO, JoinType.INNER)
                 .fetch(Bairro_.DISTRITO, JoinType.INNER)
-                .fetch(Distrito_.CIDADE, JoinType.INNER);
+                .fetch(Distrito_.CIDADE, JoinType.INNER)
+                .fetch(Cidade_.ESTADO, JoinType.INNER);
 
         cq.where(criarRestricoes(filter, cb, root));
         return manager.createQuery(cq).getResultList();
@@ -41,12 +46,17 @@ public class CepRepositoryImpl implements CepRepositoryQuery {
         Root<Cep> root = cq.from(Cep.class);
 
         root.fetch(Cep_.LOGRADOURO, JoinType.INNER)
+                .fetch(Logradouro_.TIPO_LOGRADOURO, JoinType.INNER);
+
+        root.fetch(Cep_.LOGRADOURO, JoinType.INNER)
                 .fetch(Logradouro_.DISTRITO, JoinType.INNER)
-                .fetch(Distrito_.CIDADE, JoinType.INNER);
+                .fetch(Distrito_.CIDADE, JoinType.INNER)
+                .fetch(Cidade_.ESTADO, JoinType.INNER);
 
         root.fetch(Cep_.BAIRRO, JoinType.INNER)
                 .fetch(Bairro_.DISTRITO, JoinType.INNER)
-                .fetch(Distrito_.CIDADE, JoinType.INNER);
+                .fetch(Distrito_.CIDADE, JoinType.INNER)
+                .fetch(Cidade_.ESTADO, JoinType.INNER);
 
         cq.where(criarRestricoes(filter, cb, root));
         cq.orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
@@ -57,6 +67,30 @@ public class CepRepositoryImpl implements CepRepositoryQuery {
 
         return new PageImpl<>(query.getResultList(), pageable, total(filter));
     }
+
+    @Override
+    public List<String> buscarCepsPorLogradouroBairroNumero(Long logradouroId, Long bairroId, Integer numero) {
+
+        CriteriaBuilder builder = manager.getCriteriaBuilder();
+        CriteriaQuery<String> criteria = builder.createQuery(String.class);
+        Root<Cep> root = criteria.from(Cep.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        predicates.add(builder.equal(root.get("logradouro").get("id"), logradouroId));
+        predicates.add(builder.equal(root.get("bairro").get("id"), bairroId));
+        predicates.add(builder.lessThanOrEqualTo(root.get("numeroIni"), numero));
+        predicates.add(builder.greaterThanOrEqualTo(root.get("numeroFim"), numero));
+
+        criteria.select(root.get("cep"));
+        criteria.where(predicates.toArray(new Predicate[0]));
+        criteria.distinct(true);
+        criteria.orderBy(builder.asc(root.get("cep")));
+
+        TypedQuery<String> query = manager.createQuery(criteria);
+        return query.getResultList();
+    }
+
 
     private Predicate[] criarRestricoes(
             CepFilter filter, CriteriaBuilder cb, Root<Cep> root) {

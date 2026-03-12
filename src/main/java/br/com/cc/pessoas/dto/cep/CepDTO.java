@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -18,17 +22,29 @@ public class CepDTO {
 
     private Long logradouroId;
     private String logradouroNome;
+    private String tipoLogradouro;
 
-    private Long bairroId;
-    private String bairroNome;
+    private List<BairroInfoDTO> bairros;
 
     private Long distritoId;
     private String distritoNome;
 
     private Long cidadeId;
     private String cidadeNome;
+    private String estadoUf;
+    private String bairroNome;
 
     public static CepDTO fromCep(Cep cep) {
+
+        List<BairroInfoDTO> bairros = cep.getBairro() != null
+                ? Collections.singletonList(
+                new BairroInfoDTO(
+                        cep.getBairro().getId(),
+                        cep.getBairro().getNome()
+                )
+        )
+        : Collections.emptyList();
+
         return new CepDTO(
                 cep.getId(),
                 cep.getCep(),
@@ -38,15 +54,25 @@ public class CepDTO {
 
                 cep.getLogradouro().getId(),
                 cep.getLogradouro().getNome(),
+                cep.getLogradouro().getTipoLogradouro().getSigla(),
 
-                cep.getBairro().getId(),
-                cep.getBairro().getNome(),
+                bairros,
 
-                cep.getBairro().getDistrito().getId(),
-                cep.getBairro().getDistrito().getNome(),
+                cep.getLogradouro().getDistrito().getId(),
+                cep.getLogradouro().getDistrito().getNome(),
 
-                cep.getBairro().getDistrito().getCidade().getId(),
-                cep.getBairro().getDistrito().getCidade().getNome()
+                cep.getLogradouro().getDistrito().getCidade().getId(),
+                cep.getLogradouro().getDistrito().getCidade().getNome(),
+                cep.getLogradouro().getDistrito().getCidade().getEstado().getUf(),
+                cep.getBairro().getNome()
         );
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public static class BairroInfoDTO {
+        private Long id;
+        private String nome;
     }
 }

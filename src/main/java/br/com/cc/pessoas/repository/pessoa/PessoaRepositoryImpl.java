@@ -93,18 +93,23 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
             );
         }
 
-        // 🔹 DATA NASCIMENTO (Pessoa Física)
-        /*if (filter.getDataNascimento() != null) {
+        if (filter.getDataNascimento() != null) {
 
             Root<DadosPessoaFisica> pf = cb.treat(root, DadosPessoaFisica.class);
 
-            predicates.add(
-                    cb.equal(
-                            pf.get(DadosPessoaFisica_.DATA_NASCIMENTO),
-                            filter.getDataNascimento()
-                    )
-            );
-        }*/
+            var ini = filter.getDataNascimento().atStartOfDay();           // 1968-09-14 00:00
+            var fim = filter.getDataNascimento().plusDays(1).atStartOfDay(); // 1968-09-15 00:00
+
+            predicates.add(cb.greaterThanOrEqualTo(
+                    pf.get(DadosPessoaFisica_.DATA_NASCIMENTO),
+                    java.sql.Timestamp.valueOf(ini)
+            ));
+
+            predicates.add(cb.lessThan(
+                    pf.get(DadosPessoaFisica_.DATA_NASCIMENTO),
+                    java.sql.Timestamp.valueOf(fim)
+            ));
+        }
 
         return predicates.toArray(new Predicate[0]);
     }

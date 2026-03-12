@@ -28,8 +28,8 @@ public class Estado {
     @Column(name = "NOME", length = 255, nullable = false)
     private String nome;
 
-    @Column(name = "SIGLA", length = 5, nullable = false)
-    private String sigla;
+    @Column(name = "UF", length = 5, nullable = false)
+    private String uf;
 
     @Column(name = "CODIGO_INEP")
     private Long codigoInep;

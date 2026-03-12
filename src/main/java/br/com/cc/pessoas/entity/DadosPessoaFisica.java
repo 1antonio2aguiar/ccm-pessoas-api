@@ -53,7 +53,4 @@ public class DadosPessoaFisica extends Pessoa {
     @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
 
-    @Column(name = "observacao")
-    private String observacao;
-
 }

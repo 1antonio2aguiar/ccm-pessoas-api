@@ -7,7 +7,7 @@ public record DistritoDTO(
         Long cidadeId,
         String cidadeNome,
         Long estadoId,
-        String estadoNome,
+        String estadoUf,
         String nome,
         Long codigoInep
 ) {
@@ -20,7 +20,7 @@ public record DistritoDTO(
                 distrito.getCidade().getId(),
                 distrito.getCidade().getNome(),
                 distrito.getCidade().getEstado().getId(),
-                distrito.getCidade().getEstado().getNome(),
+                distrito.getCidade().getEstado().getUf(),
                 distrito.getNome(),
                 distrito.getCodigoInep()
         );

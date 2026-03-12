@@ -77,12 +77,23 @@ public class CepService {
 
         return cepRepository.save(cep);
     }
-
     @Transactional
     public void delete(Long id) {
         Cep cep = cepRepository.findById(id)
                 .orElseThrow(() ->
                         new ObjectNotFoundException("CEP não encontrado. Id: " + id));
         cepRepository.delete(cep);
+    }
+    /*public List<String> buscarCepsPorLogradouroBairroNumero(Long logradouroId, Long bairroId, Integer numero) {
+        return cepRepository.buscarCepsPorLogradouroBairroNumero(logradouroId, bairroId, numero);
+    }*/
+
+    public List<String> buscarCepsPorLogradouroBairroNumero(Long logradouroId, Long bairroId, Integer numero) {
+        return cepRepository.buscarCepsPorLogradouroBairroNumero(logradouroId, bairroId, numero)
+            .stream()
+            .filter(cep -> cep != null && !cep.isBlank())
+            .map(String::trim)
+            .distinct()
+            .toList();
     }
 }

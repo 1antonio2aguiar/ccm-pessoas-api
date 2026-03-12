@@ -19,7 +19,6 @@ public record DadosPessoaFisicaDTO(
         Long localNascimentoId,
         String mae,
         String pai,
-        String observacao,
         LocalDate dataNascimento
 
 ) {
@@ -43,7 +42,6 @@ public record DadosPessoaFisicaDTO(
                 pf.getLocalNascimentoId(),
                 pf.getMae(),
                 pf.getPai(),
-                pf.getObservacao(),
                 pf.getDataNascimento()
         );
     }

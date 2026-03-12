@@ -3,7 +3,7 @@ package br.com.cc.pessoas.dto.pessoa;
 import java.time.LocalDateTime;
 
 public record PessoaUpdateDTO(
-
+        String nome,
         Long tipoPessoaId,
         Long situacaoId,
         LocalDateTime dataCadastro,
@@ -11,4 +11,8 @@ public record PessoaUpdateDTO(
 
         DadosPessoaFisicaDTO dadosPessoaFisica,
         DadosPessoaJuridicaDTO dadosPessoaJuridica
-) {}
+) {
+    public String getNome() {
+        return nome != null ? nome.toUpperCase() : "";
+    }
+}

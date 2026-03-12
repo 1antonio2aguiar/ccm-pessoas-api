@@ -7,7 +7,7 @@ public record EstadoDTO(
         Long paisId,
         String paisNome,
         String nome,
-        String sigla,
+        String uf,
         Long codigoInep
 ) {
 
@@ -19,7 +19,7 @@ public record EstadoDTO(
                 estado.getPais().getId(),
                 estado.getPais().getNome(),
                 estado.getNome(),
-                estado.getSigla(),
+                estado.getUf(),
                 estado.getCodigoInep()
         );
     }

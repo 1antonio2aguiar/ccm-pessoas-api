@@ -19,7 +19,8 @@ public class LogradouroDTO {
     private String complemento;
 
     private Long tipoLogradouroId;
-    private String tipoLogradouroIdDescricao;
+    private String tipoLogradouro;
+    private String tipoLogradouroDescricao;
 
     private Long distritoId;
     private String nomeDistrito;
@@ -37,6 +38,7 @@ public class LogradouroDTO {
                 logradouro.getNomeSimplificado(),
                 logradouro.getComplemento(),
                 logradouro.getTipoLogradouro().getId(),
+                logradouro.getTipoLogradouro().getSigla(),
                 logradouro.getTipoLogradouro().getDescricao(),
                 logradouro.getDistrito().getId(),
                 logradouro.getDistrito().getNome(),

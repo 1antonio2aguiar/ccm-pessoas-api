@@ -5,6 +5,7 @@ import br.com.cc.pessoas.entity.Cidade;
 public record CidadeDTO(
         Long id,
         Long estadoId,
+        String estadoUf,
         String estadoNome,
         String nome,
         String sigla,
@@ -19,6 +20,7 @@ public record CidadeDTO(
         return new CidadeDTO(
                 cidade.getId(),
                 cidade.getEstado().getId(),
+                cidade.getEstado().getUf(),
                 cidade.getEstado().getNome(),
                 cidade.getNome(),
                 cidade.getSigla(),
