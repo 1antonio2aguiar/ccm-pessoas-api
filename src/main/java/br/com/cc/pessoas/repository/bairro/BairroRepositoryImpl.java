@@ -29,8 +29,8 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
         CriteriaQuery<Bairro> cq = cb.createQuery(Bairro.class);
         Root<Bairro> root = cq.from(Bairro.class);
 
-        root.fetch("distrito", JoinType.INNER)
-            .fetch("cidade", JoinType.INNER);
+        root.fetch("pesDistrito", JoinType.INNER)
+            .fetch("pesCidade", JoinType.INNER);
 
         Predicate[] predicates = criarRestricoes(filter, cb, root);
         cq.where(predicates);
@@ -44,8 +44,9 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
         CriteriaQuery<Bairro> cq = cb.createQuery(Bairro.class);
         Root<Bairro> root = cq.from(Bairro.class);
 
-        root.fetch("distrito", JoinType.INNER)
-            .fetch("cidade", JoinType.INNER);
+        root.fetch("pesDistrito", JoinType.INNER)
+                .fetch("pesCidade", JoinType.INNER);
+
 
         cq.where(criarRestricoes(filter, cb, root));
         cq.orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
@@ -64,7 +65,7 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
 
         // ID DO BAIRRO
         if (filter.getId() != null) {
-            predicates.add(cb.equal(root.get("id"), filter.getId()));
+            predicates.add(cb.equal(root.get("bairro"), filter.getId()));
         }
 
         // NOME DO BAIRRO
@@ -84,10 +85,10 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
         }*/
 
         // ID DA CIDADE
-        if(filter.getCidadeId() != null) {
+        /*if(filter.getCidadeId() != null) {
             predicates.add(cb.equal(root.get(Bairro_.DISTRITO).get(Distrito_.CIDADE).
                     get(Cidade_.ID), filter.getCidadeId()));
-        }
+        }*/
 
         // NOME DA CIDADE
         if (StringUtils.hasLength(filter.getCidadeNome())) {

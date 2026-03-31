@@ -1,7 +1,8 @@
-package br.com.cc.pessoas.repository.endereco;
+package br.com.cc.pessoas.unificacao.pesRepository.pesPais;
 
-import br.com.cc.pessoas.entity.*;
-import com.pesoas.api.filter.enderecos.EnderecoFilter;
+import br.com.cc.pessoas.unificacao.pesEntity.PesPais;
+import br.com.cc.pessoas.unificacao.pesEntity.PesPais_;
+import br.com.cc.pessoas.unificacao.pesFilter.PesPaisFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -15,56 +16,59 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnderecoRepositoryImpl implements EnderecoRepositoryQuery {
+public class PesPaisRepositoryImpl implements PesPaisRepositoryQuery {
     @PersistenceContext
     private EntityManager manager;
     @Override
-    public Page<Endereco> filtrar(EnderecoFilter enderecoFilter, Pageable pageable) {
+    public Page<PesPais> filtrar(PesPaisFilter pesPaisFilter, Pageable pageable) {
 
         CriteriaBuilder builder = manager.getCriteriaBuilder();
-        CriteriaQuery<Endereco> criteria = builder.createQuery(Endereco.class);
-        Root<Endereco> root = criteria.from(Endereco.class);
+        CriteriaQuery<PesPais> criteria = builder.createQuery(PesPais.class);
+        Root<PesPais> root = criteria.from(PesPais.class);
 
         List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, builder);
 
-        Predicate[] predicates = criarRestricoes(enderecoFilter, builder, root);
+        Predicate[] predicates = criarRestricoes(pesPaisFilter, builder, root);
         criteria.where(predicates).orderBy(orders);
 
-        TypedQuery<Endereco> query = manager.createQuery(criteria);
+        TypedQuery<PesPais> query = manager.createQuery(criteria);
         adicionarRestricoesDePaginacao(query, pageable);
 
-        return new PageImpl<>(query.getResultList(), pageable, total(enderecoFilter));
+        return new PageImpl<>(query.getResultList(), pageable, total(pesPaisFilter));
 
     }
 
     //Aqui da lista sem paginacao
     @Override
-    public List<Endereco> filtrar(EnderecoFilter enderecoFilter) {
+    public List<PesPais> filtrar(PesPaisFilter pesPaisFilter) {
         CriteriaBuilder builder = manager.getCriteriaBuilder();
-        CriteriaQuery<Endereco> criteria = builder.createQuery(Endereco.class);
-        Root<Endereco> root = criteria.from(Endereco.class);
+        CriteriaQuery<PesPais> criteria = builder.createQuery(PesPais.class);
+        Root<PesPais> root = criteria.from(PesPais.class);
 
-        Predicate[] predicates = criarRestricoes(enderecoFilter, builder, root);
+        Predicate[] predicates = criarRestricoes(pesPaisFilter, builder, root);
         criteria.where(predicates);
 
-        TypedQuery<Endereco> query = manager.createQuery(criteria);
+        TypedQuery<PesPais> query = manager.createQuery(criteria);
         return query.getResultList();
     }
 
     private Predicate[] criarRestricoes(
-        EnderecoFilter enderecoFilter, CriteriaBuilder builder, Root<Endereco> root) {
+            PesPaisFilter pesPaisFilter, CriteriaBuilder builder, Root<PesPais> root) {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        // ID
-        if(enderecoFilter.getId() != null) {
-            predicates.add(builder.equal(root.get(Endereco_.ID), enderecoFilter.getId()));
+        // ID DO PAIS
+        if(pesPaisFilter.getPais() != null) {
+            predicates.add(builder.equal(root.get(PesPais_.PAIS), pesPaisFilter.getPais()));
         }
 
-        // CEP
-        /*if(StringUtils.hasLength(enderecoFilter.getCep())) {
-            predicates.add(builder.equal(root.get(Endereco_.CEP).get(Cep_.CEP), enderecoFilter.getCep()));
-        }*/
+        // NOME DO PAIS
+        if (StringUtils.hasLength(pesPaisFilter.getNome())) {
+            predicates.add(
+                    builder.like(
+                            builder.lower(root.get(PesPais_.NOME)),
+                            "%" + pesPaisFilter.getNome().toLowerCase() + "%"));
+        }
 
         return predicates.toArray(new Predicate[predicates.size()]);
     }
@@ -77,10 +81,10 @@ public class EnderecoRepositoryImpl implements EnderecoRepositoryQuery {
         query.setMaxResults(totalRegistrosPorPagina);
     }
 
-    private Long total(com.pesoas.api.filter.enderecos.EnderecoFilter filter) {
+    private Long total(PesPaisFilter filter) {
         CriteriaBuilder builder = manager.getCriteriaBuilder();
         CriteriaQuery<Long> criteria = builder.createQuery(Long.class);
-        Root<Endereco> root = criteria.from(Endereco.class);
+        Root<PesPais> root = criteria.from(PesPais.class);
 
         Predicate[] predicates = criarRestricoes(filter, builder, root);
         criteria.where(predicates);

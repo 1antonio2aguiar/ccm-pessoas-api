@@ -1,70 +1,70 @@
-package br.com.cc.pessoas.repository.endereco;
+package br.com.cc.pessoas.repository.contato;
 
-import br.com.cc.pessoas.entity.*;
-import com.pesoas.api.filter.enderecos.EnderecoFilter;
+import br.com.cc.pessoas.entity.Contato;
+import br.com.cc.pessoas.entity.Contato_;
+import br.com.cc.pessoas.entity.Estado_;
+import br.com.cc.pessoas.filter.ContatoFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.query.QueryUtils;
-import org.springframework.util.StringUtils;
+import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EnderecoRepositoryImpl implements EnderecoRepositoryQuery {
+public class ContatoRepositoryImpl implements ContatoRepositoryQuery {
     @PersistenceContext
     private EntityManager manager;
     @Override
-    public Page<Endereco> filtrar(EnderecoFilter enderecoFilter, Pageable pageable) {
+    public Page<Contato> filtrar(ContatoFilter contatoFilter, Pageable pageable) {
 
         CriteriaBuilder builder = manager.getCriteriaBuilder();
-        CriteriaQuery<Endereco> criteria = builder.createQuery(Endereco.class);
-        Root<Endereco> root = criteria.from(Endereco.class);
+        CriteriaQuery<Contato> criteria = builder.createQuery(Contato.class);
+        Root<Contato> root = criteria.from(Contato.class);
+
+        root.fetch("pessoa", JoinType.INNER);
 
         List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, builder);
 
-        Predicate[] predicates = criarRestricoes(enderecoFilter, builder, root);
+        Predicate[] predicates = criarRestricoes(contatoFilter, builder, root);
         criteria.where(predicates).orderBy(orders);
 
-        TypedQuery<Endereco> query = manager.createQuery(criteria);
+        TypedQuery<Contato> query = manager.createQuery(criteria);
         adicionarRestricoesDePaginacao(query, pageable);
 
-        return new PageImpl<>(query.getResultList(), pageable, total(enderecoFilter));
+        return new PageImpl<>(query.getResultList(), pageable, total(contatoFilter));
 
     }
 
     //Aqui da lista sem paginacao
     @Override
-    public List<Endereco> filtrar(EnderecoFilter enderecoFilter) {
+    public List<Contato> filtrar(ContatoFilter contatoFilter) {
         CriteriaBuilder builder = manager.getCriteriaBuilder();
-        CriteriaQuery<Endereco> criteria = builder.createQuery(Endereco.class);
-        Root<Endereco> root = criteria.from(Endereco.class);
+        CriteriaQuery<Contato> criteria = builder.createQuery(Contato.class);
+        Root<Contato> root = criteria.from(Contato.class);
 
-        Predicate[] predicates = criarRestricoes(enderecoFilter, builder, root);
+        root.fetch("pessoa", JoinType.INNER);
+
+        Predicate[] predicates = criarRestricoes(contatoFilter, builder, root);
         criteria.where(predicates);
 
-        TypedQuery<Endereco> query = manager.createQuery(criteria);
+        TypedQuery<Contato> query = manager.createQuery(criteria);
         return query.getResultList();
     }
 
     private Predicate[] criarRestricoes(
-        EnderecoFilter enderecoFilter, CriteriaBuilder builder, Root<Endereco> root) {
+            ContatoFilter contatoFilter, CriteriaBuilder builder, Root<Contato> root) {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        // ID
-        if(enderecoFilter.getId() != null) {
-            predicates.add(builder.equal(root.get(Endereco_.ID), enderecoFilter.getId()));
+        // ID DO CONTATO
+        if(contatoFilter.getId() != null) {
+            predicates.add(builder.equal(root.get(Contato_.ID), contatoFilter.getId()));
         }
-
-        // CEP
-        /*if(StringUtils.hasLength(enderecoFilter.getCep())) {
-            predicates.add(builder.equal(root.get(Endereco_.CEP).get(Cep_.CEP), enderecoFilter.getCep()));
-        }*/
 
         return predicates.toArray(new Predicate[predicates.size()]);
     }
@@ -77,10 +77,10 @@ public class EnderecoRepositoryImpl implements EnderecoRepositoryQuery {
         query.setMaxResults(totalRegistrosPorPagina);
     }
 
-    private Long total(com.pesoas.api.filter.enderecos.EnderecoFilter filter) {
+    private Long total(ContatoFilter filter) {
         CriteriaBuilder builder = manager.getCriteriaBuilder();
         CriteriaQuery<Long> criteria = builder.createQuery(Long.class);
-        Root<Endereco> root = criteria.from(Endereco.class);
+        Root<Contato> root = criteria.from(Contato.class);
 
         Predicate[] predicates = criarRestricoes(filter, builder, root);
         criteria.where(predicates);
