@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class PesCepFilter {
 
-    private String cep;
+    private Long cep;
     private Long cidade;
     private String cidadeNome;
     private Long logradouro;

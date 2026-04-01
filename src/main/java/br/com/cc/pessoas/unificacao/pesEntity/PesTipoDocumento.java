@@ -19,6 +19,6 @@ public class PesTipoDocumento {
 
     @Id
     @Column(name = "TIPO_DOCUMENTO")
-    private Integer tipoDocumento;
+    private Long tipoDocumento;
     private String descricao;
 }

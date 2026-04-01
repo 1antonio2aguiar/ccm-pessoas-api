@@ -1,10 +1,7 @@
 package br.com.cc.pessoas.unificacao.pesDto;
 
-import br.com.cc.pessoas.unificacao.pesEntity.PesBairro;
-import br.com.cc.pessoas.unificacao.pesEntity.PesCidade;
-import br.com.cc.pessoas.unificacao.pesEntity.PesDistrito;
-import br.com.cc.pessoas.unificacao.pesEntity.PesLogradouro;
-import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
+import br.com.cc.pessoas.entity.TipoPessoa;
+import br.com.cc.pessoas.unificacao.pesEntity.*;
 
 import java.time.LocalDateTime;
 
@@ -12,8 +9,11 @@ public record PesPessoaDTO(
         Long pessoa,
         String nome,
         String fisicaJuridica,
+        LocalDateTime dataCadastro,
         Long cgcCpf,
+
         Long tipoPessoa,
+        String tipoPessoaDescricao,
 
         Long cidade,
         String cidadeNome,
@@ -27,15 +27,33 @@ public record PesPessoaDTO(
 
         Long logradouro,
         String logradouroNome,
-
+        String tipoLogradouro,
         Long numero,
-        Long complemento,
+        String complemento,
         Long cep,
 
-        Integer tipoDocumento,
-        Long numeroDocto,
-        Long orgaoDocto,
-        LocalDateTime dataDocto,
+        LocalDateTime dataNascimento,
+        String estadoCivil,
+        String sexo,
+
+        Long cidadeNascimento,
+        String cidadeNascimentoNome,
+
+        Long pais,
+
+        Long tipoDocumento,
+        String tipoDocumentoDescricao,
+
+        String numeroDocto,
+        String orgaoDocto,
+        LocalDateTime emissaoDocto,
+
+        Long tituloEleitoral,
+        Long zona,
+        Long secao,
+
+        String mae,
+        String pai,
 
         Long telefone,
         Long recado,
@@ -43,30 +61,23 @@ public record PesPessoaDTO(
         Long fax,
         String email,
         String paginaWeb,
-        String vip,
-        String sexo,
-        String estadoCivil,
-        LocalDateTime dataNascimento,
-        String pai,
-        String mae,
-        String nomeSocial,
-        Long zona,
-        Long secao,
-        Long tipoEmpresa,
+
         Long pessoaMatriz,
         String inscricaoEstadual,
         String fantasia,
+        Long profissao,
+        String vip,
+        Long usuario,
+        String observacao,
+        Long conjuge,
+        LocalDateTime dtAlteracao,
+        String usuarioAlteracao,
         String objetoSocial,
         String microEmpresa,
-        Long conjuge,
-        Long profissao,
-        Long cidadeNascimento,
-        LocalDateTime dataCadastro,
-        String observacao,
-        Long usuario,
-        Long usuarioAlteracao,
         Long mesEnvioSicom,
         Long anoEnvioSicom,
+        Long tipoEmpresa,
+        String nomeSocial,
         String deficiente
 ) {
     public static PesPessoaDTO fromEntity(PesPessoa entity) {
@@ -74,35 +85,62 @@ public record PesPessoaDTO(
         PesDistrito distrito = entity.getPesDistrito();
         PesBairro bairro = entity.getPesBairro();
         PesLogradouro logradouro = entity.getPesLogradouro();
+        PesTipoPessoa pesTipoPessoa = entity.getPesTipoPessoa();
+        PesTipoDocumento pesTipoDocumento = entity.getPesTipoDocumento();
 
         return new PesPessoaDTO(
                 entity.getPessoa(),
                 entity.getNome(),
                 entity.getFisicaJuridica(),
+                entity.getDataCadastro(),
                 entity.getCgcCpf(),
-                entity.getTipoPessoa(),
 
-                cidade != null ? cidade.getCidade() : null,
+                pesTipoPessoa != null ? Long.valueOf(pesTipoPessoa.getTipoPessoa()) : null,
+                pesTipoPessoa != null ? pesTipoPessoa.getDescricao() : null,
+
+                entity.getCidade(),
                 cidade != null ? cidade.getNome() : null,
                 cidade != null && cidade.getEstado() != null ? cidade.getEstado().getEstado() : null,
 
-                distrito != null ? distrito.getDistrito() : null,
+                entity.getDistrito(),
                 distrito != null ? distrito.getNome() : null,
 
-                bairro != null ? bairro.getBairro() : null,
+                entity.getBairro(),
                 bairro != null ? bairro.getNome() : null,
 
-                logradouro != null ? logradouro.getLogradouro() : null,
+                entity.getLogradouro(),
                 logradouro != null ? logradouro.getNome() : null,
+
+                logradouro != null && logradouro.getTipoLogradouro() != null
+                        ? String.valueOf(logradouro.getTipoLogradouro().getTipoLogradouro())
+                        : null,
 
                 entity.getNumero(),
                 entity.getComplemento(),
                 entity.getCep(),
 
-                entity.getTipoDocumento() != null ? entity.getTipoDocumento().getTipoDocumento() : null,
+                entity.getDataNascimento(),
+                entity.getEstadoCivil(),
+                entity.getSexo(),
+
+                entity.getCidadeNascimento(),
+                null,
+
+                entity.getPais(),
+
+                pesTipoDocumento != null ? Long.valueOf(pesTipoDocumento.getTipoDocumento()) : null,
+                pesTipoDocumento != null ? pesTipoDocumento.getDescricao() : null,
+
                 entity.getNumeroDocto(),
                 entity.getOrgaoDocto(),
-                entity.getDataDocto(),
+                entity.getEmissaoDocto(),
+
+                entity.getTituloEleitoral(),
+                entity.getZona(),
+                entity.getSecao(),
+
+                entity.getMae(),
+                entity.getPai(),
 
                 entity.getTelefone(),
                 entity.getRecado(),
@@ -110,30 +148,23 @@ public record PesPessoaDTO(
                 entity.getFax(),
                 entity.getEmail(),
                 entity.getPaginaWeb(),
-                entity.getVip(),
-                entity.getSexo(),
-                entity.getEstadoCivil(),
-                entity.getDataNascimento(),
-                entity.getPai(),
-                entity.getMae(),
-                entity.getNomeSocial(),
-                entity.getZona(),
-                entity.getSecao(),
-                entity.getTipoEmpresa(),
+
                 entity.getPessoaMatriz(),
                 entity.getInsricaoEstadual(),
                 entity.getFantasia(),
+                entity.getProfissao(),
+                entity.getVip(),
+                entity.getUsuario(),
+                entity.getObservacao(),
+                entity.getConjuge(),
+                entity.getDtAlteracao(),
+                entity.getUsuarioAlteracao(),
                 entity.getObjetoSocial(),
                 entity.getMicroEmpresa(),
-                entity.getConjuge(),
-                entity.getProfissao(),
-                entity.getCidadeNascimento(),
-                entity.getDataCadastro(),
-                entity.getObservacao(),
-                entity.getUsuario(),
-                entity.getUsuarioAlteracao(),
                 entity.getMesEnvioSicom(),
                 entity.getAnoEnvioSicom(),
+                entity.getTipoEmpresa(),
+                entity.getNomeSocial(),
                 entity.getDeficiente()
         );
     }

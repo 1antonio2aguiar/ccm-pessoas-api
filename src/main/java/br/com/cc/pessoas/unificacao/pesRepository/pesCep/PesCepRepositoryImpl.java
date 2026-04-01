@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.query.QueryUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class PesCepRepositoryImpl implements PesCepRepositoryQuery {
         root.fetch("pesLogradouro", JoinType.LEFT)
                 .fetch("pesDistrito", JoinType.LEFT)
                 .fetch("pesCidade", JoinType.LEFT)
-                .fetch("pesEstado", JoinType.LEFT);
+                .fetch("estado", JoinType.LEFT);
 
         List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, builder);
 
@@ -58,7 +59,7 @@ public class PesCepRepositoryImpl implements PesCepRepositoryQuery {
         root.fetch("pesLogradouro", JoinType.LEFT)
                 .fetch("pesDistrito", JoinType.LEFT)
                 .fetch("pesCidade", JoinType.LEFT)
-                .fetch("pesEstado", JoinType.LEFT);
+                .fetch("estado", JoinType.LEFT);
 
         Predicate[] predicates = criarRestricoes(pesCepFilter, builder, root);
         criteria.where(predicates).distinct(true);
@@ -68,12 +69,46 @@ public class PesCepRepositoryImpl implements PesCepRepositoryQuery {
     }
 
     private Predicate[] criarRestricoes(
-            PesCepFilter pesCepFilter, CriteriaBuilder builder, Root<PesCep> root) {
+            PesCepFilter filter, CriteriaBuilder builder, Root<PesCep> root) {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        if (pesCepFilter.getCep() != null) {
-            predicates.add(builder.equal(root.get(PesCep_.CEP), pesCepFilter.getCep()));
+        // CEP
+        if (filter.getCep() != null) {
+            predicates.add(builder.equal(root.get(PesCep_.CEP), filter.getCep()));
+        }
+
+        // ID CIDADE
+        if (filter.getCidade() != null) {
+            predicates.add(builder.equal(root.get(PesCep_.CIDADE), filter.getCidade()));
+        }
+
+        // NOME DA CIDADE
+        if (StringUtils.hasText(filter.getCidadeNome())) {
+            predicates.add(
+                    builder.like(
+                            builder.lower(root.get("pesLogradouro")
+                                    .get("pesDistrito")
+                                    .get("pesCidade")
+                                    .get("nome")),
+                            "%" + filter.getCidadeNome().toLowerCase() + "%"
+                    )
+            );
+        }
+
+        // ID LOGRADOURO
+        if (filter.getLogradouro() != null) {
+            predicates.add(builder.equal(root.get(PesCep_.LOGRADOURO), filter.getLogradouro()));
+        }
+
+        // NOME DO LOGRADOURO
+        if (StringUtils.hasText(filter.getLogradouroNome())) {
+            predicates.add(
+                    builder.like(
+                            builder.lower(root.get("pesLogradouro").get("nome")),
+                            "%" + filter.getLogradouroNome().toLowerCase() + "%"
+                    )
+            );
         }
 
         return predicates.toArray(new Predicate[0]);

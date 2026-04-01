@@ -2,7 +2,6 @@ package br.com.cc.pessoas.unificacao.pesDto.cadUnicoPessoa;
 
 import br.com.cc.pessoas.unificacao.pesEntity.CadUnicoPessoa;
 import br.com.cc.pessoas.unificacao.pesEntity.PesCidade;
-import br.com.cc.pessoas.unificacao.pesEntity.PesDistrito;
 
 import java.time.LocalDateTime;
 
@@ -24,11 +23,9 @@ public record CadUnicoPessoaDTO(
         String observacao,
         Long cidadeNascimento,
         String cidadeNascimentoNome
-
 ) {
     public static CadUnicoPessoaDTO fromEntity(CadUnicoPessoa entity) {
-        PesDistrito distrito = entity.getPesDistrito();
-        PesCidade cidade = distrito != null ? distrito.getPesCidade() : null;
+        PesCidade cidadeNascimento = entity.getPesCidadeNascimento();
 
         return new CadUnicoPessoaDTO(
                 entity.getId(),
@@ -46,9 +43,8 @@ public record CadUnicoPessoaDTO(
                 entity.getDataNascimento(),
                 entity.getDataCadastro(),
                 entity.getObservacao(),
-                entity.getCidadeNascimento(),
-                entity.getPesDistrito().getPesCidade().getNome()
-
+                cidadeNascimento != null ? cidadeNascimento.getCidade() : null,
+                cidadeNascimento != null ? cidadeNascimento.getNome() : null
         );
     }
 }

@@ -27,11 +27,15 @@ public class PesPessoa {
     @Column(name = "FISICA_JURIDICA", length = 1)
     private String fisicaJuridica;
 
+    @Column(name = "DATA_CADASTRO")
+    private LocalDateTime dataCadastro;
+
     @Column(name = "CGC_CPF")
     private Long cgcCpf;
 
-    @Column(name = "TIPO_PESSOA")
-    private Long tipoPessoa;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "TIPO_PESSOA", referencedColumnName = "TIPO_PESSOA")
+    private PesTipoPessoa pesTipoPessoa;
 
     @Column(name = "CIDADE")
     private Long cidade;
@@ -49,23 +53,53 @@ public class PesPessoa {
     private Long numero;
 
     @Column(name = "COMPLEMENTO")
-    private Long complemento;
+    private String complemento;
 
     @Column(name = "CEP")
     private Long cep;
 
+    @Column(name = "DATA_NASCIMENTO")
+    private LocalDateTime dataNascimento;
+
+    @Column(name = "ESTADO_CIVIL")
+    private String estadoCivil;
+
+    @Column(name = "SEXO")
+    private String sexo;
+
+    @Column(name = "CIDADE_NASCIMENTO")
+    private Long cidadeNascimento;
+
+    @Column(name = "PAIS")
+    private Long pais;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "TIPO_DOCUMENTO", referencedColumnName = "TIPO_DOCUMENTO")
-    private PesTipoDocumento tipoDocumento;
+    private PesTipoDocumento pesTipoDocumento;
 
     @Column(name = "NUMERO_DOCTO")
-    private Long numeroDocto;
+    private String numeroDocto;
 
     @Column(name = "ORGAO_DOCTO")
-    private Long orgaoDocto;
+    private String orgaoDocto;
 
-    @Column(name = "DATA_DOCTO")
-    private LocalDateTime dataDocto;
+    @Column(name = "EMISSAO_DOCTO")
+    private LocalDateTime emissaoDocto;
+
+    @Column(name = "TITULO_ELEITORAL")
+    private Long tituloEleitoral;
+
+    @Column(name = "ZONA")
+    private Long zona;
+
+    @Column(name = "SECAO")
+    private Long secao;
+
+    @Column(name = "MAE")
+    private String mae;
+
+    @Column(name = "PAI")
+    private String pai;
 
     @Column(name = "TELEFONE")
     private Long telefone;
@@ -79,41 +113,11 @@ public class PesPessoa {
     @Column(name = "FAX")
     private Long fax;
 
-    @Column(name = "EMAIL")
+    @Column(name = "E_MAIL")
     private String email;
 
     @Column(name = "PAGINA_WEB")
     private String paginaWeb;
-
-    @Column(name = "VIP")
-    private String vip;
-
-    @Column(name = "SEXO")
-    private String sexo;
-
-    @Column(name = "ESTADO_CIVIL")
-    private String estadoCivil;
-
-    @Column(name = "DATA_NASCIMENTO")
-    private LocalDateTime dataNascimento;
-
-    @Column(name = "PAI")
-    private String pai;
-
-    @Column(name = "MAE")
-    private String mae;
-
-    @Column(name = "NOME_SOCIAL")
-    private String nomeSocial;
-
-    @Column(name = "ZONA")
-    private Long zona;
-
-    @Column(name = "SECAO")
-    private Long secao;
-
-    @Column(name = "TIPO_EMPRESA")
-    private Long tipoEmpresa;
 
     @Column(name = "PESSOA_MATRIZ")
     private Long pessoaMatriz;
@@ -124,38 +128,44 @@ public class PesPessoa {
     @Column(name = "FANTASIA")
     private String fantasia;
 
-    @Column(name = "OBJETO_SOCIAL")
-    private String objetoSocial;
-
-    @Column(name = "MICRO_EMPRESA")
-    private String microEmpresa;
-
-    @Column(name = "CONJUGE")
-    private Long conjuge;
-
     @Column(name = "PROFISSAO")
     private Long profissao;
 
-    @Column(name = "CIDADE_NASCIMENTO")
-    private Long cidadeNascimento;
-
-    @Column(name = "DATA_CADASTRO")
-    private LocalDateTime dataCadastro;
-
-    @Column(name = "OBSERVACAO")
-    private String observacao;
+    @Column(name = "VIP")
+    private String vip;
 
     @Column(name = "USUARIO")
     private Long usuario;
 
+    @Column(name = "OBSERVACAO")
+    private String observacao;
+
+    @Column(name = "CONJUGUE")
+    private Long conjuge;
+
+    @Column(name = "DT_ALTERACAO")
+    private LocalDateTime dtAlteracao;
+
     @Column(name = "USUARIO_ALTERACAO")
-    private Long usuarioAlteracao;
+    private String usuarioAlteracao;
+
+    @Column(name = "OBJETO_SOCIAL")
+    private String objetoSocial;
+
+    @Column(name = "MICROEMPRESA")
+    private String microEmpresa;
 
     @Column(name = "MES_ENVIO_SICOM")
     private Long mesEnvioSicom;
 
     @Column(name = "ANO_ENVIO_SICOM")
     private Long anoEnvioSicom;
+
+    @Column(name = "TIPO_EMPRESA")
+    private Long tipoEmpresa;
+
+    @Column(name = "NOME_SOCIAL")
+    private String nomeSocial;
 
     @Column(name = "DEFICIENTE")
     private String deficiente;

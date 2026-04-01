@@ -38,7 +38,8 @@ public class PesPessoaRepositoryImpl implements PesPessoaRepositoryQuery {
         root.fetch("pesDistrito", JoinType.LEFT);
         root.fetch("pesBairro", JoinType.LEFT);
         root.fetch("pesLogradouro", JoinType.LEFT);
-        root.fetch("tipoDocumento", JoinType.LEFT);
+        root.fetch("pesTipoPessoa", JoinType.LEFT);
+        root.fetch("pesTipoDocumento", JoinType.LEFT);
 
         List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, builder);
 
@@ -62,7 +63,8 @@ public class PesPessoaRepositoryImpl implements PesPessoaRepositoryQuery {
         root.fetch("pesDistrito", JoinType.LEFT);
         root.fetch("pesBairro", JoinType.LEFT);
         root.fetch("pesLogradouro", JoinType.LEFT);
-        root.fetch("tipoDocumento", JoinType.LEFT);
+        root.fetch("pesTipoPessoa", JoinType.LEFT);
+        root.fetch("pesTipoDocumento", JoinType.LEFT);
 
         Predicate[] predicates = criarRestricoes(pesPessoa, builder, root);
         criteria.where(predicates).distinct(true);

@@ -33,8 +33,8 @@ public class CadUnicoPessoaRepositoryImpl implements CadUnicoPessoaRepositoryQue
         CriteriaQuery<CadUnicoPessoa> criteria = builder.createQuery(CadUnicoPessoa.class);
         Root<CadUnicoPessoa> root = criteria.from(CadUnicoPessoa.class);
 
-        root.fetch("pesCidade", JoinType.LEFT);
-        root.fetch("pesDistrito", JoinType.LEFT);
+        root.fetch("pesCidadeNascimento", JoinType.LEFT)
+                .fetch("estado", JoinType.LEFT);
 
         List<Order> orders = QueryUtils.toOrders(pageable.getSort(), root, builder);
 
@@ -54,8 +54,8 @@ public class CadUnicoPessoaRepositoryImpl implements CadUnicoPessoaRepositoryQue
         CriteriaQuery<CadUnicoPessoa> criteria = builder.createQuery(CadUnicoPessoa.class);
         Root<CadUnicoPessoa> root = criteria.from(CadUnicoPessoa.class);
 
-        root.fetch("pesCidade", JoinType.LEFT);
-        root.fetch("pesDistrito", JoinType.LEFT);
+        root.fetch("pesCidadeNascimento", JoinType.LEFT)
+                .fetch("estado", JoinType.LEFT);
 
         Predicate[] predicates = criarRestricoes(cadUnicoPessoa, builder, root);
         criteria.where(predicates).distinct(true);

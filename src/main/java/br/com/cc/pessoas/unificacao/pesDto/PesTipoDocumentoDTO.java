@@ -3,7 +3,7 @@ package br.com.cc.pessoas.unificacao.pesDto;
 import br.com.cc.pessoas.unificacao.pesEntity.PesTipoDocumento;
 
 public record PesTipoDocumentoDTO(
-        Integer tipoDocumento,
+        Long tipoDocumento,
         String descricao
 ) {
     public static PesTipoDocumentoDTO fromEntity(PesTipoDocumento entity) {

@@ -63,19 +63,7 @@ public class CadUnicoPessoa {
     @Column(name = "OBSERVACAO")
     private String observacao;
 
-    @Column(name = "CIDADE_NASCIMENTO")
-    private Long cidadeNascimento;
-
-    @Column(name = "CIDADE")
-    private Long cidade;
-
-    @Column(name = "DISTRITO")
-    private Long distrito;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumns({
-            @JoinColumn(name = "CIDADE", referencedColumnName = "CIDADE", insertable = false, updatable = false),
-            @JoinColumn(name = "DISTRITO", referencedColumnName = "DISTRITO", insertable = false, updatable = false)
-    })
-    private PesDistrito pesDistrito;
+    @JoinColumn(name = "CIDADE_NASCIMENTO", referencedColumnName = "CIDADE", insertable = false, updatable = false)
+    private PesCidade pesCidadeNascimento;
 }
