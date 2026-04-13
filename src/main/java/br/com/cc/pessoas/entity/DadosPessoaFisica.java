@@ -1,5 +1,6 @@
 package br.com.cc.pessoas.entity;
 
+import br.com.cc.pessoas.entity.enuns.EstadoCivil;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,7 +40,7 @@ public class DadosPessoaFisica extends Pessoa {
     private String sexo;
 
     @Column(name = "estado_civil")
-    private String estadoCivil;
+    private EstadoCivil estadoCivil;
 
     @Column(name = "local_nascimento_id")
     private Long localNascimentoId;

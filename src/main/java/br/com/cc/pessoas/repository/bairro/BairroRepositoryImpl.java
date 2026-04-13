@@ -1,10 +1,7 @@
 package br.com.cc.pessoas.repository.bairro;
 
-import br.com.cc.pessoas.entity.Bairro_;
-import br.com.cc.pessoas.entity.Cidade_;
-import br.com.cc.pessoas.entity.Distrito_;
+import br.com.cc.pessoas.entity.*;
 import br.com.cc.pessoas.filter.BairroFilter;
-import br.com.cc.pessoas.entity.Bairro;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -29,8 +26,8 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
         CriteriaQuery<Bairro> cq = cb.createQuery(Bairro.class);
         Root<Bairro> root = cq.from(Bairro.class);
 
-        root.fetch("pesDistrito", JoinType.INNER)
-            .fetch("pesCidade", JoinType.INNER);
+        root.fetch("distrito", JoinType.INNER)
+            .fetch("cidade", JoinType.INNER);
 
         Predicate[] predicates = criarRestricoes(filter, cb, root);
         cq.where(predicates);
@@ -44,8 +41,8 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
         CriteriaQuery<Bairro> cq = cb.createQuery(Bairro.class);
         Root<Bairro> root = cq.from(Bairro.class);
 
-        root.fetch("pesDistrito", JoinType.INNER)
-                .fetch("pesCidade", JoinType.INNER);
+        root.fetch("distrito", JoinType.INNER)
+                .fetch("cidade", JoinType.INNER);
 
 
         cq.where(criarRestricoes(filter, cb, root));
@@ -76,19 +73,14 @@ public class BairroRepositoryImpl implements BairroRepositoryQuery {
             ));
         }
 
-
-        /*if (StringUtils.hasText(filter.getCidadeNome())) {
-            predicates.add(cb.like(
-                    cb.lower(cb.trim(cidade.get("nome"))),
-                    "%" + filter.getCidadeNome().toLowerCase() + "%"
-            ));
-        }*/
-
         // ID DA CIDADE
-        /*if(filter.getCidadeId() != null) {
-            predicates.add(cb.equal(root.get(Bairro_.DISTRITO).get(Distrito_.CIDADE).
-                    get(Cidade_.ID), filter.getCidadeId()));
-        }*/
+        if (filter.getCidadeId() != null) {
+            predicates.add(cb.equal(
+                    root.get(Logradouro_.DISTRITO)
+                            .get(Distrito_.CIDADE)
+                            .get(Cidade_.ID),
+                    filter.getCidadeId()));
+        }
 
         // NOME DA CIDADE
         if (StringUtils.hasLength(filter.getCidadeNome())) {

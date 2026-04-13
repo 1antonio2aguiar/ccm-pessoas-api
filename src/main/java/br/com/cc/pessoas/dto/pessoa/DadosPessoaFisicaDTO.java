@@ -15,14 +15,14 @@ public record DadosPessoaFisicaDTO(
         String recebeBf,
         String cartaoSus,
         String sexo,
-        String estadoCivil,
+        Integer estadoCivil, // codigo do Enum
+        String estadoCivilDescricao, // Descrição do Enum
         Long localNascimentoId,
         String mae,
         String pai,
         LocalDate dataNascimento
 
 ) {
-
     public static DadosPessoaFisicaDTO fromEntity(DadosPessoaFisica pf) {
 
         if (pf == null) {
@@ -38,7 +38,8 @@ public record DadosPessoaFisicaDTO(
                 pf.getRecebeBf(),
                 pf.getCartaoSus(),
                 pf.getSexo(),
-                pf.getEstadoCivil(),
+                pf.getEstadoCivil() != null ? pf.getEstadoCivil().getCodigo() : null,
+                pf.getEstadoCivil() != null ? pf.getEstadoCivil().getDescricao() : null,
                 pf.getLocalNascimentoId(),
                 pf.getMae(),
                 pf.getPai(),

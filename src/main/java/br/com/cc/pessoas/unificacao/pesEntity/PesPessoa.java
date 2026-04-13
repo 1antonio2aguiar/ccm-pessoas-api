@@ -196,4 +196,14 @@ public class PesPessoa {
             @JoinColumn(name = "LOGRADOURO", referencedColumnName = "LOGRADOURO", insertable = false, updatable = false)
     })
     private PesLogradouro pesLogradouro;
+
+    @Transient
+    public String getBairroNome() {
+        return this.pesBairro != null ? this.pesBairro.getNome() : null;
+    }
+
+    @Transient
+    public String getLogradouroNome() {
+        return this.pesLogradouro != null ? this.pesLogradouro.getNome() : null;
+    }
 }

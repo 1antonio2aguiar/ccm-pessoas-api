@@ -22,7 +22,7 @@ public class CadUnicoPessoa {
     private Long id;
 
     @Column(name = "CD_ORIGEM")
-    private Long cd_origem;
+    private Long cdOrigem;
 
     @Column(name = "TIPO_PESSOA")
     private Long tipoPessoa;

@@ -29,7 +29,7 @@ public record CadUnicoPessoaDTO(
 
         return new CadUnicoPessoaDTO(
                 entity.getId(),
-                entity.getCd_origem(),
+                entity.getCdOrigem(),
                 entity.getTipoPessoa(),
                 entity.getNome(),
                 entity.getFisicaJuridica(),

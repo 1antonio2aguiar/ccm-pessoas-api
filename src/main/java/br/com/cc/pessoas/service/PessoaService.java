@@ -2,6 +2,8 @@ package br.com.cc.pessoas.service;
 
 import br.com.cc.pessoas.dto.pessoa.*;
 import br.com.cc.pessoas.entity.*;
+import br.com.cc.pessoas.entity.enuns.EstadoCivil;
+import br.com.cc.pessoas.entity.enuns.TipoDocumento;
 import br.com.cc.pessoas.filter.PessoaFilter;
 import br.com.cc.pessoas.repository.PessoaRepository;
 import br.com.cc.pessoas.repository.TipoPessoaRepository;
@@ -96,7 +98,10 @@ public class PessoaService {
             pf.setRecebeBf(pfDTO.recebeBf());
             pf.setCartaoSus(pfDTO.cartaoSus());
             pf.setSexo(pfDTO.sexo());
-            pf.setEstadoCivil(pfDTO.estadoCivil());
+
+            // set o enum
+            pf.setEstadoCivil(EstadoCivil.toEstadoCivilEnum(dto.dadosPessoaFisica().estadoCivil()));
+
             pf.setLocalNascimentoId(pfDTO.localNascimentoId());
             pf.setMae(pfDTO.mae());
             pf.setPai(pfDTO.pai());
@@ -180,7 +185,8 @@ public class PessoaService {
             pf.setRecebeBf(pfDTO.recebeBf());
             pf.setCartaoSus(pfDTO.cartaoSus());
             pf.setSexo(pfDTO.sexo());
-            pf.setEstadoCivil(pfDTO.estadoCivil());
+            // set o enum
+            pf.setEstadoCivil(EstadoCivil.toEstadoCivilEnum(dto.dadosPessoaFisica().estadoCivil()));
             pf.setLocalNascimentoId(pfDTO.localNascimentoId());
             pf.setMae(pfDTO.mae());
             pf.setPai(pfDTO.pai());

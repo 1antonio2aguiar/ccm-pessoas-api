@@ -1,7 +1,9 @@
 package br.com.cc.pessoas.unificacao.pesController;
 
 import br.com.cc.pessoas.unificacao.pesDto.PesPessoaDTO;
+import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
 import br.com.cc.pessoas.unificacao.pesFilter.PesPessoaFilter;
+import br.com.cc.pessoas.unificacao.pesRepository.PesPessoaRepository;
 import br.com.cc.pessoas.unificacao.pesService.PesPessoaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,8 @@ public class PesPessoaController {
 
     @Autowired
     private PesPessoaService service;
+    @Autowired
+    private PesPessoaRepository pesPessoaRepository;
 
     @GetMapping
     public Page<PesPessoaDTO> pesquisar(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
@@ -30,5 +34,10 @@ public class PesPessoaController {
     @GetMapping("/list")
     public List<PesPessoaDTO> listar(@ModelAttribute PesPessoaFilter filter) {
         return service.filtrar(filter);
+    }
+
+    @GetMapping("/cpf-unico-nao-migradas")
+    public Page<PesPessoaDTO> filtrarCpfUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable) {
+        return pesPessoaRepository.filtrarCpfUnicoNaoMigradas(filter, pageable);
     }
 }

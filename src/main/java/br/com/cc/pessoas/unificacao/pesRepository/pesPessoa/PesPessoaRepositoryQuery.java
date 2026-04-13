@@ -11,6 +11,5 @@ import java.util.List;
 
 public interface PesPessoaRepositoryQuery {
     Page<PesPessoa> filtrar(PesPessoaFilter filter, Pageable pageable);
-
     List<PesPessoa> filtrar(PesPessoaFilter filter);
 }

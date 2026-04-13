@@ -29,7 +29,7 @@ public record CadUnicoPessoaCreateDTO(
     public CadUnicoPessoa toEntity() {
         CadUnicoPessoa entity = new CadUnicoPessoa();
 
-        entity.setCd_origem(this.cdOrigem);
+        entity.setCdOrigem(this.cdOrigem);
         entity.setTipoPessoa(this.tipoPessoa);
         entity.setNome(this.nome);
         entity.setFisicaJuridica(this.fisicaJuridica);

@@ -1,17 +1,13 @@
 package br.com.cc.pessoas.unificacao.pesRepository.pesPessoa;
 
+import br.com.cc.pessoas.unificacao.pesEntity.CadUnicoPessoa;
 import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
 import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa_;
 import br.com.cc.pessoas.unificacao.pesFilter.PesPessoaFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Order;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -78,6 +74,10 @@ public class PesPessoaRepositoryImpl implements PesPessoaRepositoryQuery {
 
         List<Predicate> predicates = new ArrayList<>();
 
+        if (pesPessoa.getFisicaJuridica() != null) {
+            predicates.add(builder.equal(root.get(PesPessoa_.FISICA_JURIDICA), pesPessoa.getFisicaJuridica()));
+        }
+
         if (pesPessoa.getPessoa() != null) {
             predicates.add(builder.equal(root.get(PesPessoa_.PESSOA), pesPessoa.getPessoa()));
         }
@@ -107,6 +107,38 @@ public class PesPessoaRepositoryImpl implements PesPessoaRepositoryQuery {
 
             predicates.add(builder.greaterThanOrEqualTo(root.get(PesPessoa_.DATA_NASCIMENTO), ini));
             predicates.add(builder.lessThan(root.get(PesPessoa_.DATA_NASCIMENTO), fim));
+        }
+
+        if (Boolean.TRUE.equals(pesPessoa.getSomenteNaoMigradas())) {
+            CriteriaQuery<Long> dummyQuery = builder.createQuery(Long.class);
+            Subquery<Long> subNaoMigradas = dummyQuery.subquery(Long.class);
+            Root<CadUnicoPessoa> cup = subNaoMigradas.from(CadUnicoPessoa.class);
+
+            subNaoMigradas.select(builder.literal(1L));
+            subNaoMigradas.where(
+                    builder.equal(cup.get("cdOrigem"), root.get(PesPessoa_.PESSOA))
+            );
+
+            predicates.add(builder.not(builder.exists(subNaoMigradas)));
+        }
+
+        if (Boolean.TRUE.equals(pesPessoa.getSomenteCpfUnico())) {
+            predicates.add(builder.equal(root.get(PesPessoa_.FISICA_JURIDICA), "F"));
+            predicates.add(builder.isNotNull(root.get(PesPessoa_.CGC_CPF)));
+
+            CriteriaQuery<Long> dummyQuery = builder.createQuery(Long.class);
+            Subquery<Long> subCpfDuplicado = dummyQuery.subquery(Long.class);
+            Root<PesPessoa> p2 = subCpfDuplicado.from(PesPessoa.class);
+
+            subCpfDuplicado.select(builder.literal(1L));
+            subCpfDuplicado.where(
+                    builder.equal(p2.get(PesPessoa_.FISICA_JURIDICA), "F"),
+                    builder.equal(p2.get(PesPessoa_.CGC_CPF), root.get(PesPessoa_.CGC_CPF))
+            );
+            subCpfDuplicado.groupBy(p2.get(PesPessoa_.CGC_CPF));
+            subCpfDuplicado.having(builder.gt(builder.count(p2), 1L));
+
+            predicates.add(builder.not(builder.exists(subCpfDuplicado)));
         }
 
         return predicates.toArray(new Predicate[0]);
