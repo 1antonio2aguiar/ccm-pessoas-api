@@ -15,10 +15,8 @@ public record PessoaDTO(
 
         Long tipoPessoaId,
         Long situacaoId,
-
         LocalDateTime dataCadastro,
         String observacao,
-
         DadosPessoaFisicaDTO dadosPessoaFisica,
         DadosPessoaJuridicaDTO dadosPessoaJuridica
 

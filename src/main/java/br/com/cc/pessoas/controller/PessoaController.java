@@ -61,11 +61,11 @@ public class PessoaController {
             @PathVariable Long id,
             @RequestBody @Valid PessoaUpdateDTO dto) {
 
-        Pessoa salva = pessoaService.update(id, dto);
+        PessoaDTO salva = pessoaService.update(id, dto);
 
         return ResponseEntity
                 .ok()
-                .body(PessoaDTO.fromPessoa(salva));
+                .body(salva);
     }
 
     @DeleteMapping("/{id}")

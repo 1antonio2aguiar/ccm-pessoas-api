@@ -45,6 +45,10 @@ public class DadosPessoaFisica extends Pessoa {
     @Column(name = "local_nascimento_id")
     private Long localNascimentoId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "local_nascimento_id", insertable = false, updatable = false)
+    private Cidade localNascimento;
+
     @Column(name = "mae")
     private String mae;
 

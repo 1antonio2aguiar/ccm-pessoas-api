@@ -59,6 +59,12 @@ public class PesCargaPessoaCpfUnicoService {
     @PersistenceContext
     private EntityManager manager;
 
+    public Long iniciarCargaLote() {
+        Long idControle = iniciarControle();
+        executarCarga(idControle);
+        return idControle;
+    }
+
     @Transactional
     public void executarCarga(Long idControle) {
         try {
@@ -160,7 +166,7 @@ public class PesCargaPessoaCpfUnicoService {
                 .setParameter("id", idPessoa)
                 .setParameter("cdOrigem", pessoa.getPessoa())
                 .setParameter("tipoPessoa", tipoPessoa)
-                .setParameter("nome", pessoa.getNome())
+                .setParameter("nome", pessoa.getNome().toUpperCase())
                 .setParameter("fisicaJuridica", pessoa.getFisicaJuridica())
                 .setParameter("dataCadastro", pessoa.getDataCadastro())
                 .setParameter("cpfCnpj", cpf == null ? null : Long.valueOf(cpf))
@@ -198,7 +204,7 @@ public class PesCargaPessoaCpfUnicoService {
                 """)
                 .setParameter("id", idPessoa)
                 .setParameter("tipoPessoa_id", tipoPessoa)
-                .setParameter("nome", pessoa.getNome())
+                .setParameter("nome", pessoa.getNome().toUpperCase())
                 .setParameter("dataCadastro", pessoa.getDataCadastro())
                 .setParameter("fisicaJuridica", pessoa.getFisicaJuridica())
                 .setParameter("observacao", pessoa.getObservacao())
@@ -236,7 +242,7 @@ public class PesCargaPessoaCpfUnicoService {
                 .setParameter("nomeSocial", pessoa.getNomeSocial())
                 .setParameter("sexo", pessoa.getSexo())
                 .setParameter("estadoCivil", estadoCivil)
-                .setParameter("localNascimento_id", localNascimento)
+                .setParameter("localNascimento_id", cidadeNascimentoCcm)
                 .setParameter("mae", pessoa.getMae())
                 .setParameter("pai", pessoa.getPai())
                 .setParameter("dataNascimento", pessoa.getDataNascimento())
@@ -940,11 +946,7 @@ public class PesCargaPessoaCpfUnicoService {
         );
     }
 
-    public Long iniciarCargaLote() {
-        Long idControle = iniciarControle();
-        executarCarga(idControle);
-        return idControle;
-    }
+
     private Long buscarCodigoCcmDistrito(Long cidade, Long distrito) {
 
         if (cidade == null || distrito == null) {

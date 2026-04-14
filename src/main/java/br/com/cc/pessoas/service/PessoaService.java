@@ -29,6 +29,7 @@ public class PessoaService {
     // ===============================
     // LISTAR
     // ===============================
+    @Transactional(readOnly = true)
     public List<PessoaDTO> listar(PessoaFilter filter) {
         return pessoaRepository.filtrar(filter)
                 .stream()
@@ -39,6 +40,7 @@ public class PessoaService {
     // ===============================
     // PESQUISAR
     // ===============================
+    @Transactional(readOnly = true)
     public Page<PessoaDTO> pesquisar(PessoaFilter filter, Pageable pageable) {
         Page<Pessoa> page = pessoaRepository.filtrar(filter, pageable);
         return page.map(PessoaDTO::fromPessoa);
@@ -47,6 +49,7 @@ public class PessoaService {
     // ===============================
     // FIND BY ID
     // ===============================
+    @Transactional(readOnly = true)
     public PessoaDTO findDtoById(Long id) {
         return pessoaRepository.findById(id)
                 .map(PessoaDTO::fromPessoa)
@@ -145,7 +148,7 @@ public class PessoaService {
     // UPDATE
     // ===============================
     @Transactional
-    public Pessoa update(Long id, PessoaUpdateDTO dto) {
+    public PessoaDTO update(Long id, PessoaUpdateDTO dto){
 
         Pessoa pessoa = pessoaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada"));
@@ -175,7 +178,6 @@ public class PessoaService {
         if (pessoa instanceof DadosPessoaFisica pf && dto.dadosPessoaFisica() != null) {
             DadosPessoaFisicaDTO pfDTO = dto.dadosPessoaFisica();
 
-            // CPF normalmente não muda, mas se quiser permitir:
             if (StringUtils.hasText(pfDTO.cpf())) pf.setCpf(pfDTO.cpf().trim());
 
             pf.setNomeSocial(pfDTO.nomeSocial());
@@ -185,15 +187,11 @@ public class PessoaService {
             pf.setRecebeBf(pfDTO.recebeBf());
             pf.setCartaoSus(pfDTO.cartaoSus());
             pf.setSexo(pfDTO.sexo());
-            // set o enum
             pf.setEstadoCivil(EstadoCivil.toEstadoCivilEnum(dto.dadosPessoaFisica().estadoCivil()));
             pf.setLocalNascimentoId(pfDTO.localNascimentoId());
             pf.setMae(pfDTO.mae());
             pf.setPai(pfDTO.pai());
             pf.setDataNascimento(pfDTO.dataNascimento());
-
-            // ⚠️ Se você manteve "observacao" também na tabela DADOS_PF, descomente:
-            // pf.setObservacao(pfDTO.observacao());
         }
 
         // Atualiza PJ (somente se for PJ)
@@ -210,7 +208,8 @@ public class PessoaService {
             pj.setTipoEmpresa(pjDTO.tipoEmpresa());
         }
 
-        return pessoaRepository.save(pessoa);
+        Pessoa salva = pessoaRepository.save(pessoa);
+        return PessoaDTO.fromPessoa(salva);
     }
 
     // ===============================

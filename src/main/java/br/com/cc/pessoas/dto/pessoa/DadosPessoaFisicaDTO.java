@@ -1,5 +1,6 @@
 package br.com.cc.pessoas.dto.pessoa;
 
+import br.com.cc.pessoas.entity.Cidade;
 import br.com.cc.pessoas.entity.DadosPessoaFisica;
 
 import java.time.LocalDate;
@@ -18,6 +19,8 @@ public record DadosPessoaFisicaDTO(
         Integer estadoCivil, // codigo do Enum
         String estadoCivilDescricao, // Descrição do Enum
         Long localNascimentoId,
+        String localNascimentoNome,
+        String ufNascimento,
         String mae,
         String pai,
         LocalDate dataNascimento
@@ -28,6 +31,8 @@ public record DadosPessoaFisicaDTO(
         if (pf == null) {
             return null;
         }
+
+        Cidade cidadeNascimento = pf.getLocalNascimento();
 
         return new DadosPessoaFisicaDTO(
                 pf.getCpf(),
@@ -41,6 +46,10 @@ public record DadosPessoaFisicaDTO(
                 pf.getEstadoCivil() != null ? pf.getEstadoCivil().getCodigo() : null,
                 pf.getEstadoCivil() != null ? pf.getEstadoCivil().getDescricao() : null,
                 pf.getLocalNascimentoId(),
+                cidadeNascimento != null ? cidadeNascimento.getNome() : null,
+                cidadeNascimento != null && cidadeNascimento.getEstado() != null
+                        ? cidadeNascimento.getEstado().getUf()
+                        : null,
                 pf.getMae(),
                 pf.getPai(),
                 pf.getDataNascimento()
