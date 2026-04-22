@@ -134,20 +134,20 @@ public class PesPessoa {
     @Column(name = "VIP")
     private String vip;
 
-    @Column(name = "USUARIO")
-    private Long usuario;
+    //@Column(name = "USUARIO")
+    //private Long usuario;
 
     @Column(name = "OBSERVACAO")
     private String observacao;
 
     @Column(name = "CONJUGUE")
-    private Long conjuge;
+    private String conjugue;
 
-    @Column(name = "DT_ALTERACAO")
-    private LocalDateTime dtAlteracao;
+    //@Column(name = "DT_ALTERACAO")
+    //private LocalDateTime dtAlteracao;
 
-    @Column(name = "USUARIO_ALTERACAO")
-    private String usuarioAlteracao;
+    //@Column(name = "USUARIO_ALTERACAO")
+    //private String usuarioAlteracao;
 
     @Column(name = "OBJETO_SOCIAL")
     private String objetoSocial;

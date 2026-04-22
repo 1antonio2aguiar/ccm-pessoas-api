@@ -40,4 +40,9 @@ public class PesPessoaController {
     public Page<PesPessoaDTO> filtrarCpfUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable) {
         return pesPessoaRepository.filtrarCpfUnicoNaoMigradas(filter, pageable);
     }
+
+    @GetMapping("/cpf-duplicado-nao-migradas")
+    public Page<PesPessoaDTO> filtrarCpfDuplicadoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
+        return pesPessoaRepository.filtrarCpfDuplicadoNaoMigradas(filter, pageable);
+    }
 }

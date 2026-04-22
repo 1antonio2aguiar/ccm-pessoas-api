@@ -15,12 +15,6 @@ public class PesCargaPessoaCpfUnicoController {
         this.service = service;
     }
 
-    @PostMapping("/iniciar")
-    public ResponseEntity<Long> iniciarCargaLote() {
-        Long idControle = service.iniciarCargaLote();
-        return ResponseEntity.ok(idControle);
-    }
-
     @PostMapping("/processar/{pessoaId}")
     public ResponseEntity<String> processarPessoa(@PathVariable Long pessoaId) {
         service.processarPessoaUnica(pessoaId);

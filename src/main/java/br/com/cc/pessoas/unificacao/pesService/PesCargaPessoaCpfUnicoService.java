@@ -38,12 +38,14 @@ import java.util.Set;
     select * from dbo_ccm_pessoas.tipos_logradouros;
     select * from dbo_cc_enderecos.tipos_logradouros;
 
-    delete from DBO_CCM_PESSOAS.cad_unico_pessoa where cd_origem = 91481;
-    delete from dbo_ccm_pessoas.pessoas where id = 20;
-    delete from dbo_ccm_pessoas.dados_pf where id = 20;
-    delete from dbo_ccm_pessoas.contatos where id = 20;
-    delete from dbo_ccm_pessoas.documentos where id = 20;
-    delete from dbo_ccm_pessoas.enderecos where id = 20;
+    delete from DBO_CCM_PESSOAS.cad_unico_pessoa where cd_origem in(447169,2007548,3007040);
+    delete from dbo_ccm_pessoas.pessoas where id = 9426;
+    delete from dbo_ccm_pessoas.dados_pf where pessoa_id = 9426;
+    delete from dbo_ccm_pessoas.contatos where pessoa_id = 9426;
+    delete from dbo_ccm_pessoas.documentos where pessoa_id = 9426;
+    delete from dbo_ccm_pessoas.enderecos where pessoa_id = 9426;
+
+    commit;
 
  */
 
@@ -115,7 +117,6 @@ public class PesCargaPessoaCpfUnicoService {
     private void processarPessoa(PesPessoa pessoa) {
 
         Long idPessoa = getNextVal("SEQ_CAD_UNICO_PESSOA");
-        Long localNascimento = buscarLocalNascimento(pessoa.getCidadeNascimento());
         Long cidadeNascimentoCcm = buscarCidadeNascimentoCcm(pessoa.getCidadeNascimento());
         Integer estadoCivil = mapearEstadoCivil(pessoa.getEstadoCivil());
 
@@ -238,7 +239,7 @@ public class PesCargaPessoaCpfUnicoService {
                     )
                 """)
                 .setParameter("id", idPessoa)
-                .setParameter("cpf", cpf == null ? null : Long.valueOf(cpf))
+                .setParameter("cpf", cpf)
                 .setParameter("nomeSocial", pessoa.getNomeSocial())
                 .setParameter("sexo", pessoa.getSexo())
                 .setParameter("estadoCivil", estadoCivil)
@@ -514,29 +515,39 @@ public class PesCargaPessoaCpfUnicoService {
     }
 
     private String normalizarCpf(Long cgcCpf) {
-        if (cgcCpf == null) return null;
+        if (cgcCpf == null) {
+            return null;
+        }
 
-        String cpf = String.valueOf(cgcCpf);
+        String cpf = String.valueOf(cgcCpf).trim();
         int length = cpf.length();
 
-        if (length > 11) {
-            if (length == 12) {
-                return cpf.substring(1);
+        if (length < 11) {
+            StringBuilder zeros = new StringBuilder();
+            for (int i = 0; i < 11 - length; i++) {
+                zeros.append('0');
+            }
+            return zeros + cpf;
+        }
+
+        if (length == 11) {
+            return cpf;
+        }
+
+        if (length == 12) {
+            return cpf.substring(1);
+        }
+
+        if (length == 13 || length == 14) {
+            if (cpf.equals("77777777777777")) {
+                return "77777777777";
             }
 
-            if (length == 13 || length == 14) {
-                if (cpf.equals("77777777777777")) {
-                    return "77777777777";
-                }
-
-                if (cpf.equals("12543307000118")) {
-                    return "54330700011";
-                }
-
-                return "00000000000";
+            if (cpf.equals("12543307000118")) {
+                return "54330700011";
             }
-        } else {
-            return String.format("%011d", cgcCpf);
+
+            return "00000000000";
         }
 
         return cpf;
@@ -713,73 +724,6 @@ public class PesCargaPessoaCpfUnicoService {
             return null;
         }
     }
-
-    /*private EnderecoCarga buscarEnderecoPorCep(PesPessoa pessoa, Long numero) {
-        if (pessoa.getCep() == null) {
-            return null;
-        }
-
-        String cepLimpo = String.valueOf(pessoa.getCep()).replaceAll("\\D", "").trim();
-
-        // Retorna porque é um cep invalido
-        if (cepInvalido(pessoa.getCep())) {
-            return null;
-        }
-
-        try {
-            @SuppressWarnings("unchecked")
-            List<Object[]> rows = manager.createNativeQuery("""
-                    select id, bairro_id, logradouro_id
-                      from dbo_ccm_pessoas.ceps
-                     where regexp_replace(cep, '[^0-9]', '') = :cep
-                    """)
-                    .setParameter("cep", cepLimpo)
-                    .getResultList();
-
-            if (rows == null || rows.isEmpty()) {
-                return null;
-            }
-
-            if (rows.size() == 1) {
-                Object[] row = rows.get(0);
-
-                EnderecoCarga end = new EnderecoCarga();
-                end.cepId = row[0] != null ? ((Number) row[0]).longValue() : null;
-                end.bairroId = row[1] != null ? ((Number) row[1]).longValue() : null;
-                end.logradouroId = row[2] != null ? ((Number) row[2]).longValue() : null;
-                return end;
-            }
-
-            if (numero != null) {
-                @SuppressWarnings("unchecked")
-                List<Object[]> rowsNumero = manager.createNativeQuery("""
-                        select id, bairro_id, logradouro_id
-                          from dbo_ccm_pessoas.ceps
-                         where regexp_replace(cep, '[^0-9]', '') = :cep
-                           and :numero between numero_ini and numero_fim
-                        """)
-                        .setParameter("cep", cepLimpo)
-                        .setParameter("numero", numero)
-                        .getResultList();
-
-                if (rowsNumero != null && !rowsNumero.isEmpty()) {
-                    Object[] row = rowsNumero.get(0);
-
-                    EnderecoCarga end = new EnderecoCarga();
-                    end.cepId = row[0] != null ? ((Number) row[0]).longValue() : null;
-                    end.bairroId = row[1] != null ? ((Number) row[1]).longValue() : null;
-                    end.logradouroId = row[2] != null ? ((Number) row[2]).longValue() : null;
-                    return end;
-                }
-            }
-
-            return null;
-
-        } catch (Exception e) {
-            return null;
-        }
-    }*/
-
     private EnderecoCarga buscarEnderecoSemCep(PesPessoa pessoa) {
 
         if (pessoa == null) {
