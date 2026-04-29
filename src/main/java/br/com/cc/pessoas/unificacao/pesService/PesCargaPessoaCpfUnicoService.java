@@ -1,173 +1,86 @@
 package br.com.cc.pessoas.unificacao.pesService;
 
-import br.com.cc.pessoas.unificacao.controle.ctrlEntity.PesCargaPessoasCtrl;
-import br.com.cc.pessoas.unificacao.controle.ctrlEntity.PesCargaPessoasCtrlDto;
-import br.com.cc.pessoas.unificacao.controle.ctrlEntity.PesCargaPessoasCtrlRepository;
 import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
-import br.com.cc.pessoas.unificacao.pesFilter.PesPessoaFilter;
-import br.com.cc.pessoas.unificacao.pesRepository.PesPessoaRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
-
-/*
-
-    select * from DBO_CCM_PESSOAS.cad_unico_pessoa;
-    select * from dbo_ccm_pessoas.pessoas;
-    select * from dbo_ccm_pessoas.dados_pf;
-    select * from dbo_ccm_pessoas.contatos;
-    select * from dbo_ccm_pessoas.documentos;
-    select * from dbo_ccm_pessoas.enderecos;
-
-    truncate table DBO_CCM_PESSOAS.cad_unico_pessoa;
-    truncate table dbo_ccm_pessoas.pessoas;
-    truncate table dbo_ccm_pessoas.dados_pf;
-    truncate table dbo_ccm_pessoas.contatos;
-    truncate table dbo_ccm_pessoas.documentos;
-    truncate table dbo_ccm_pessoas.enderecos;
-
-    select * from dbo_ccm_pessoas.logradouros where id = 790724;
-    select * from dbo_ccm_pessoas.tipos_logradouros;
-    select * from dbo_cc_enderecos.tipos_logradouros;
-
-    delete from DBO_CCM_PESSOAS.cad_unico_pessoa where cd_origem in(447169,2007548,3007040);
-    delete from dbo_ccm_pessoas.pessoas where id = 9426;
-    delete from dbo_ccm_pessoas.dados_pf where pessoa_id = 9426;
-    delete from dbo_ccm_pessoas.contatos where pessoa_id = 9426;
-    delete from dbo_ccm_pessoas.documentos where pessoa_id = 9426;
-    delete from dbo_ccm_pessoas.enderecos where pessoa_id = 9426;
-
-    commit;
-
- */
-
 @Service
-public class PesCargaPessoaCpfUnicoService {
+public class PesCargaPessoaCpfUnicoService extends PesCargaPessoaUnicoBaseService {
 
-    @Autowired
-    private PesPessoaRepository pesPessoaRepository;
-
-    @Autowired
-    private PesCargaPessoasCtrlRepository cargaCtrlRepository;
-
-    @PersistenceContext
-    private EntityManager manager;
-
-    public Long iniciarCargaLote() {
-        Long idControle = iniciarControle();
-        executarCarga(idControle);
-        return idControle;
+    @Override
+    protected String getFisicaJuridica() {
+        return "F";
     }
 
-    @Transactional
-    public void executarCarga(Long idControle) {
-        try {
-            marcarIniciado(idControle);
-
-            int pagina = 0;
-            int tamanho = 200;
-
-            Page<PesPessoa> page;
-
-            PesPessoaFilter filter = new PesPessoaFilter();
-            filter.setFisicaJuridica("F");
-            filter.setSomenteCpfUnico(true);
-            filter.setSomenteNaoMigradas(true);
-
-            do {
-                page = pesPessoaRepository.filtrar(filter, PageRequest.of(pagina, tamanho));
-
-                for (PesPessoa pessoa : page.getContent()) {
-                    try {
-                        processarPessoa(pessoa);
-                        somarProcessado(idControle);
-                    } catch (Exception e) {
-                        somarErro(idControle, "Pessoa " + pessoa.getPessoa() + ": " + e.getMessage());
-                    }
-                }
-
-                pagina++;
-
-            } while (!page.isLast());
-
-            marcarFinalizado(idControle);
-
-        } catch (Exception e) {
-            marcarErroGeral(idControle, e.getMessage());
-            throw e;
-        }
+    @Override
+    protected Long getTipoEndereco() {
+        return 0L;
     }
 
-    @Transactional
-    public void processarPessoaUnica(Long pessoaId) {
-        PesPessoa pessoa = pesPessoaRepository.findById(pessoaId)
-                .orElseThrow(() -> new RuntimeException("Pessoa não encontrada: " + pessoaId));
-
-        processarPessoa(pessoa);
-    }
-
-    private void processarPessoa(PesPessoa pessoa) {
-
+    @Override
+    protected void processarPessoa(PesPessoa pessoa) {
         Long idPessoa = getNextVal("SEQ_CAD_UNICO_PESSOA");
         Long cidadeNascimentoCcm = buscarCidadeNascimentoCcm(pessoa.getCidadeNascimento());
         Integer estadoCivil = mapearEstadoCivil(pessoa.getEstadoCivil());
-
         String cpf = normalizarCpf(pessoa.getCgcCpf());
+        Long tipoPessoa = getTipoPessoa(pessoa);
 
-        Long tipoPessoa = pessoa.getPesTipoPessoa() != null
-                ? pessoa.getPesTipoPessoa().getTipoPessoa()
-                : 1L;
+        inserirCadUnicoPessoaFisica(idPessoa, pessoa, tipoPessoa, cpf, cidadeNascimentoCcm);
+        inserirPessoa(idPessoa, pessoa, tipoPessoa);
+        inserirDadosPf(idPessoa, pessoa, cpf, estadoCivil, cidadeNascimentoCcm);
+        inserirEnderecoPrincipal(idPessoa, pessoa);
+        inserirDocumentosPessoaFisica(idPessoa, pessoa);
+        inserirContatos(pessoa, idPessoa);
+    }
 
+    private void inserirCadUnicoPessoaFisica(
+            Long idPessoa,
+            PesPessoa pessoa,
+            Long tipoPessoa,
+            String cpf,
+            Long cidadeNascimentoCcm
+    ) {
         manager.createNativeQuery("""
-                insert into DBO_CCM_PESSOAS.CAD_UNICO_PESSOA
-                (
-                     ID,
-                     CD_ORIGEM,
-                     TIPO_PESSOA,
-                     NOME,
-                     FISICA_JURIDICA,
-                     DATA_CADASTRO,
-                     CPF_CNPJ,
-                     DATA_NASCIMENTO,
-                     ESTADO_CIVIL,
-                     SEXO,
-                     CIDADE_NASCIMENTO,
-                     OBSERVACAO,
-                     EMAIL,
-                     BANCO,
-                     PESSOAS_CD_UNICO
-                )
-                values
-                (
-                    :id,
-                    :cdOrigem,
-                    :tipoPessoa,
-                    :nome,
-                    :fisicaJuridica,
-                    :dataCadastro,
-                    :cpfCnpj,
-                    :dataNascimento,
-                    :estadoCivil,
-                    :sexo,
-                    :cidadeNascimento,
-                    :observacao,
-                    :email,
-                    :banco,
-                    :pessoasCdUnico
-                )
-                """)
+            insert into DBO_CCM_PESSOAS.CAD_UNICO_PESSOA
+            (
+                 ID,
+                 CD_ORIGEM,
+                 TIPO_PESSOA,
+                 NOME,
+                 FISICA_JURIDICA,
+                 DATA_CADASTRO,
+                 CPF_CNPJ,
+                 DATA_NASCIMENTO,
+                 ESTADO_CIVIL,
+                 SEXO,
+                 CIDADE_NASCIMENTO,
+                 OBSERVACAO,
+                 EMAIL,
+                 BANCO,
+                 PESSOAS_CD_UNICO
+            )
+            values
+            (
+                :id,
+                :cdOrigem,
+                :tipoPessoa,
+                :nome,
+                :fisicaJuridica,
+                :dataCadastro,
+                :cpfCnpj,
+                :dataNascimento,
+                :estadoCivil,
+                :sexo,
+                :cidadeNascimento,
+                :observacao,
+                :email,
+                :banco,
+                :pessoasCdUnico
+            )
+        """)
                 .setParameter("id", idPessoa)
                 .setParameter("cdOrigem", pessoa.getPessoa())
                 .setParameter("tipoPessoa", tipoPessoa)
-                .setParameter("nome", pessoa.getNome().toUpperCase())
+                .setParameter("nome", upper(pessoa.getNome()))
                 .setParameter("fisicaJuridica", pessoa.getFisicaJuridica())
                 .setParameter("dataCadastro", pessoa.getDataCadastro())
                 .setParameter("cpfCnpj", cpf == null ? null : Long.valueOf(cpf))
@@ -180,64 +93,41 @@ public class PesCargaPessoaCpfUnicoService {
                 .setParameter("banco", "PESSOAS")
                 .setParameter("pessoasCdUnico", idPessoa)
                 .executeUpdate();
+    }
 
+    private void inserirDadosPf(
+            Long idPessoa,
+            PesPessoa pessoa,
+            String cpf,
+            Integer estadoCivil,
+            Long cidadeNascimentoCcm
+    ) {
         manager.createNativeQuery("""
-                insert into DBO_CCM_PESSOAS.PESSOAS
-                (
-                    ID,
-                    TIPO_PESSOA_ID,
-                    NOME,
-                    DATA_CADASTRO,
-                    FISICA_JURIDICA,
-                    OBSERVACAO,
-                    SITUACAO_ID
-                )
-                values
-                (
-                    :id,
-                    :tipoPessoa_id,
-                    :nome,
-                    :dataCadastro,
-                    :fisicaJuridica,
-                    :observacao,
-                    :situacao_id
-                )
-                """)
-                .setParameter("id", idPessoa)
-                .setParameter("tipoPessoa_id", tipoPessoa)
-                .setParameter("nome", pessoa.getNome().toUpperCase())
-                .setParameter("dataCadastro", pessoa.getDataCadastro())
-                .setParameter("fisicaJuridica", pessoa.getFisicaJuridica())
-                .setParameter("observacao", pessoa.getObservacao())
-                .setParameter("situacao_id", 1)
-                .executeUpdate();
-
-        manager.createNativeQuery("""
-                insert into DBO_CCM_PESSOAS.DADOS_PF
-                    (
-                        ID,
-                        CPF,
-                        NOME_SOCIAL,
-                        SEXO,
-                        ESTADO_CIVIL,
-                        LOCAL_NASCIMENTO_ID,
-                        MAE,
-                        PAI,
-                        DATA_NASCIMENTO
-                    )
-                    values
-                    (
-                        :id,
-                        :cpf,
-                        :nomeSocial,
-                        :sexo,
-                        :estadoCivil,
-                        :localNascimento_id,
-                        :mae,
-                        :pai,
-                        :dataNascimento
-                    )
-                """)
+            insert into DBO_CCM_PESSOAS.DADOS_PF
+            (
+                ID,
+                CPF,
+                NOME_SOCIAL,
+                SEXO,
+                ESTADO_CIVIL,
+                LOCAL_NASCIMENTO_ID,
+                MAE,
+                PAI,
+                DATA_NASCIMENTO
+            )
+            values
+            (
+                :id,
+                :cpf,
+                :nomeSocial,
+                :sexo,
+                :estadoCivil,
+                :localNascimento_id,
+                :mae,
+                :pai,
+                :dataNascimento
+            )
+        """)
                 .setParameter("id", idPessoa)
                 .setParameter("cpf", cpf)
                 .setParameter("nomeSocial", pessoa.getNomeSocial())
@@ -248,90 +138,34 @@ public class PesCargaPessoaCpfUnicoService {
                 .setParameter("pai", pessoa.getPai())
                 .setParameter("dataNascimento", pessoa.getDataNascimento())
                 .executeUpdate();
+    }
 
-        /*-------------------------------------------------------------------------------------------*/
-
-        EnderecoCarga endereco = null;
-
-        // 1) primeiro tenta endereço especial
-        endereco = resolverEnderecoFixo(pessoa);
-
-        // 2) se não for CEP inválido
-        if (endereco == null) {
-            endereco = buscarEnderecoSemCep(pessoa);
-        }
-
-        //  Se não for CEP válido
-        if (endereco == null) {
-            endereco = buscarEnderecoPorCep(pessoa, pessoa.getNumero());
-        }
-
-        if (endereco != null) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.ENDERECOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_ENDERECO,
-                        BAIRRO_ID,
-                        LOGRADOURO_ID,
-                        NUMERO,
-                        COMPLEMENTO,
-                        CEP_ID,
-                        BANCO,
-                        PRINCIPAL
-                    )
-                    values
-                    (
-                        SEQ_ENDERECOS.nextval,
-                        :pessoa_id,
-                        :tipoEndereco,
-                        :bairro_id,
-                        :logradouro_id,
-                        :numero,
-                        :complemento,
-                        :cep_id,
-                        :banco,
-                        :principal
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoEndereco", 0L)
-                    .setParameter("bairro_id", endereco.bairroId)
-                    .setParameter("logradouro_id", endereco.logradouroId)
-                    .setParameter("numero", pessoa.getNumero())
-                    .setParameter("complemento", pessoa.getComplemento())
-                    .setParameter("cep_id", endereco.cepId)
-                    .setParameter("banco", "PESSOAS")
-                    .setParameter("principal", "S")
-                    .executeUpdate();
-        }
-
+    private void inserirDocumentosPessoaFisica(Long idPessoa, PesPessoa pessoa) {
         if (pessoa.getNumeroDocto() != null) {
             Long tipoDocumento = pessoa.getPesTipoDocumento() != null
                     ? pessoa.getPesTipoDocumento().getTipoDocumento()
                     : 1L;
 
             manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.DOCUMENTOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_DOCUMENTO,
-                        NUMERO_DOCUMENTO,
-                        ORGAO_EXPEDIDOR,
-                        DATA_EXPEDICAO
-                    )
-                    values
-                    (
-                        SEQ_DOCUMENTOS.nextval,
-                        :pessoa_id,
-                        :tipoDocumento,
-                        :numeroDocumento,
-                        :orgaoExpedidor,
-                        :dataExpedicao
-                    )
-                    """)
+                insert into DBO_CCM_PESSOAS.DOCUMENTOS
+                (
+                    ID,
+                    PESSOA_ID,
+                    TIPO_DOCUMENTO,
+                    NUMERO_DOCUMENTO,
+                    ORGAO_EXPEDIDOR,
+                    DATA_EXPEDICAO
+                )
+                values
+                (
+                    SEQ_DOCUMENTOS.nextval,
+                    :pessoa_id,
+                    :tipoDocumento,
+                    :numeroDocumento,
+                    :orgaoExpedidor,
+                    :dataExpedicao
+                )
+            """)
                     .setParameter("pessoa_id", idPessoa)
                     .setParameter("tipoDocumento", tipoDocumento)
                     .setParameter("numeroDocumento", pessoa.getNumeroDocto())
@@ -342,25 +176,25 @@ public class PesCargaPessoaCpfUnicoService {
 
         if (pessoa.getTituloEleitoral() != null) {
             manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.DOCUMENTOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_DOCUMENTO,
-                        NUMERO_DOCUMENTO,
-                        ZONA,
-                        SECAO
-                    )
-                    values
-                    (
-                        SEQ_DOCUMENTOS.nextval,
-                        :pessoa_id,
-                        :tipoDocumento,
-                        :numeroDocumento,
-                        :zona,
-                        :secao
-                    )
-                    """)
+                insert into DBO_CCM_PESSOAS.DOCUMENTOS
+                (
+                    ID,
+                    PESSOA_ID,
+                    TIPO_DOCUMENTO,
+                    NUMERO_DOCUMENTO,
+                    ZONA,
+                    SECAO
+                )
+                values
+                (
+                    SEQ_DOCUMENTOS.nextval,
+                    :pessoa_id,
+                    :tipoDocumento,
+                    :numeroDocumento,
+                    :zona,
+                    :secao
+                )
+            """)
                     .setParameter("pessoa_id", idPessoa)
                     .setParameter("tipoDocumento", 11L)
                     .setParameter("numeroDocumento", pessoa.getTituloEleitoral())
@@ -368,150 +202,6 @@ public class PesCargaPessoaCpfUnicoService {
                     .setParameter("secao", pessoa.getSecao())
                     .executeUpdate();
         }
-
-        if (pessoa.getTelefone() != null && pessoa.getTelefone() != 0) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.CONTATOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_CONTATO,
-                        CONTATO
-                    )
-                    values
-                    (
-                        SEQ_CONTATOS.nextval,
-                        :pessoa_id,
-                        :tipoContato,
-                        :contato
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoContato", 0L)
-                    .setParameter("contato", pessoa.getTelefone())
-                    .executeUpdate();
-        }
-
-        if (pessoa.getFax() != null) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.CONTATOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_CONTATO,
-                        CONTATO
-                    )
-                    values
-                    (
-                        SEQ_CONTATOS.nextval,
-                        :pessoa_id,
-                        :tipoContato,
-                        :contato
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoContato", 6L)
-                    .setParameter("contato", pessoa.getFax())
-                    .executeUpdate();
-        }
-
-        if (pessoa.getEmail() != null) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.CONTATOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_CONTATO,
-                        CONTATO
-                    )
-                    values
-                    (
-                        SEQ_CONTATOS.nextval,
-                        :pessoa_id,
-                        :tipoContato,
-                        :contato
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoContato", 3L)
-                    .setParameter("contato", pessoa.getEmail())
-                    .executeUpdate();
-        }
-
-        if (pessoa.getPaginaWeb() != null) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.CONTATOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_CONTATO,
-                        CONTATO
-                    )
-                    values
-                    (
-                        SEQ_CONTATOS.nextval,
-                        :pessoa_id,
-                        :tipoContato,
-                        :contato
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoContato", 4L)
-                    .setParameter("contato", pessoa.getPaginaWeb())
-                    .executeUpdate();
-        }
-
-        if (pessoa.getRecado() != null && pessoa.getRecado() != 0) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.CONTATOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_CONTATO,
-                        CONTATO
-                    )
-                    values
-                    (
-                        SEQ_CONTATOS.nextval,
-                        :pessoa_id,
-                        :tipoContato,
-                        :contato
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoContato", 5L)
-                    .setParameter("contato", pessoa.getRecado())
-                    .executeUpdate();
-        }
-
-        if (pessoa.getCelular() != null && pessoa.getCelular() != 0 ) {
-            manager.createNativeQuery("""
-                    insert into DBO_CCM_PESSOAS.CONTATOS
-                    (
-                        ID,
-                        PESSOA_ID,
-                        TIPO_CONTATO,
-                        CONTATO
-                    )
-                    values
-                    (
-                        SEQ_CONTATOS.nextval,
-                        :pessoa_id,
-                        :tipoContato,
-                        :contato
-                    )
-                    """)
-                    .setParameter("pessoa_id", idPessoa)
-                    .setParameter("tipoContato", 1L)
-                    .setParameter("contato", pessoa.getCelular())
-                    .executeUpdate();
-        }
-    }
-
-    private Long getNextVal(String sequence) {
-        return ((Number) manager
-                .createNativeQuery("select " + sequence + ".nextval from dual")
-                .getSingleResult()).longValue();
     }
 
     private String normalizarCpf(Long cgcCpf) {
@@ -570,31 +260,6 @@ public class PesCargaPessoaCpfUnicoService {
         };
     }
 
-    private Long buscarLocalNascimento(Long cidadeNascimento) {
-        if (cidadeNascimento == null || cidadeNascimento == 0L) {
-            return null;
-        }
-
-        try {
-            Object result = manager.createNativeQuery("""
-                    select d.codigo_ccm
-                      from dbo_uni_pessoas.distritos d,
-                           dbo_uni_pessoas.distritos_unificado du
-                     where du.cidade_correios   = d.cidade
-                       and du.distrito_correios = d.distrito
-                       and du.cidade_pessoa     = :cidadeNascimento
-                       and du.distrito_pessoa   = 1
-                    """)
-                    .setParameter("cidadeNascimento", cidadeNascimento)
-                    .getSingleResult();
-
-            return result == null ? null : ((Number) result).longValue();
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     private Long buscarCidadeNascimentoCcm(Long cidadeNascimento) {
         if (cidadeNascimento == null || cidadeNascimento == 0L) {
             return null;
@@ -602,14 +267,14 @@ public class PesCargaPessoaCpfUnicoService {
 
         try {
             Object result = manager.createNativeQuery("""
-                    select d.cidade
-                      from dbo_uni_pessoas.distritos d,
-                           dbo_uni_pessoas.distritos_unificado du
-                     where du.cidade_correios   = d.cidade
-                       and du.distrito_correios = d.distrito
-                       and du.cidade_pessoa     = :cidadeNascimento
-                       and du.distrito_pessoa   = 1
-                    """)
+                select d.cidade
+                  from dbo_uni_pessoas.distritos d,
+                       dbo_uni_pessoas.distritos_unificado du
+                 where du.cidade_correios   = d.cidade
+                   and du.distrito_correios = d.distrito
+                   and du.cidade_pessoa     = :cidadeNascimento
+                   and du.distrito_pessoa   = 1
+            """)
                     .setParameter("cidadeNascimento", cidadeNascimento)
                     .getSingleResult();
 
@@ -618,363 +283,5 @@ public class PesCargaPessoaCpfUnicoService {
         } catch (Exception e) {
             return null;
         }
-    }
-    private EnderecoCarga resolverEnderecoFixo(PesPessoa pessoa) {
-
-        if (pessoa == null) {
-            return null;
-        }
-
-        Long cidade = pessoa.getPesCidade() != null ? pessoa.getPesCidade().getCidade() : null;
-        Long bairro = pessoa.getPesBairro() != null ? pessoa.getPesBairro().getBairro() : null;
-        Long distrito = pessoa.getPesDistrito() != null ? pessoa.getPesDistrito().getDistrito() : null;
-        Long logradouro = pessoa.getPesLogradouro() != null ? pessoa.getPesLogradouro().getLogradouro() : null;
-
-        String logradouroNome = pessoa.getLogradouroNome();
-        String bairroNome = pessoa.getBairroNome();
-
-        boolean enderecoEspecial =
-                (Long.valueOf(1L).equals(cidade) || Long.valueOf(9999L).equals(cidade)) &&
-                        (
-                                Long.valueOf(8888L).equals(bairro) ||
-                                        Long.valueOf(9999L).equals(bairro) ||
-                                        Long.valueOf(9999L).equals(logradouro) ||
-                                        Long.valueOf(9999L).equals(distrito) ||
-                                        Long.valueOf(8888L).equals(distrito)
-                        );
-
-        if (!enderecoEspecial) {
-            return null;
-        }
-
-        Long codigoCcm = buscarCodigoCcmDistrito(cidade, distrito);
-
-        if (codigoCcm == null) {
-            return null;
-        }
-
-        EnderecoCarga end = new EnderecoCarga();
-
-        end.logradouroId = buscarLogradouroPorNome(codigoCcm, logradouroNome);
-        end.bairroId = buscarBairroPorNome(codigoCcm, bairroNome);
-
-        if (Long.valueOf(1L).equals(cidade)) {
-            end.cepId = 1354012L;
-        } else if (Long.valueOf(9999L).equals(cidade)) {
-            end.cepId = 1354012L;
-        } else {
-            end.cepId = null;
-        }
-
-        return end;
-    }
-
-    private EnderecoCarga buscarEnderecoPorCep(PesPessoa pessoa, Long numero) {
-
-        if (pessoa.getCep() == null) {
-            return null;
-        }
-
-        if (cepInvalido(pessoa.getCep())) {
-            return null;
-        }
-
-        String cepLimpo = String.valueOf(pessoa.getCep()).trim();
-
-        try {
-            @SuppressWarnings("unchecked")
-            List<Object[]> rows = manager.createNativeQuery("""
-            select id, bairro_id, logradouro_id
-            from (
-                select c.id,
-                       c.bairro_id,
-                       c.logradouro_id,
-                       case
-                           when :numero is not null
-                            and c.numero_ini is not null
-                            and c.numero_fim is not null
-                            and :numero between c.numero_ini and c.numero_fim
-                           then 0
-                           else 1
-                       end as ordem
-                from dbo_ccm_pessoas.ceps c
-                where trim(c.cep) = :cep
-                order by ordem, c.id
-            )
-            where rownum = 1
-        """)
-                    .setParameter("cep", cepLimpo)
-                    .setParameter("numero", numero)
-                    .getResultList();
-
-            if (rows == null || rows.isEmpty()) {
-                return null;
-            }
-
-            Object[] row = rows.get(0);
-
-            EnderecoCarga end = new EnderecoCarga();
-            end.cepId = row[0] != null ? ((Number) row[0]).longValue() : null;
-            end.bairroId = row[1] != null ? ((Number) row[1]).longValue() : null;
-            end.logradouroId = row[2] != null ? ((Number) row[2]).longValue() : null;
-
-            return end;
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-    private EnderecoCarga buscarEnderecoSemCep(PesPessoa pessoa) {
-
-        if (pessoa == null) {
-            return null;
-        }
-
-        // Retorna porque é um cep valido
-        if (!cepInvalido(pessoa.getCep())) {
-            return null;
-        }
-
-        Long cidade = pessoa.getPesCidade() != null ? pessoa.getPesCidade().getCidade() : null;
-        Long distrito = pessoa.getPesDistrito() != null ? pessoa.getPesDistrito().getDistrito() : null;
-        Long logradouro = pessoa.getPesLogradouro() != null ? pessoa.getPesLogradouro().getLogradouro() : null;
-        Long bairro = pessoa.getPesBairro() != null ? pessoa.getPesBairro().getBairro() : null;
-
-        if (cidade == null || distrito == null) {
-            return null;
-        }
-
-        EnderecoCarga end = new EnderecoCarga();
-
-        try {
-            Object resultLogradouro = manager.createNativeQuery("""
-            select l.codigo_ccm
-              from dbo_uni_pessoas.logradouros_unificado lu
-              join dbo_uni_pessoas.logradouros l
-                on l.cidade = lu.cidade_correios
-               and l.distrito = lu.distrito_correios
-               and l.logradouro = lu.logradouro_correios
-             where lu.cidade_pessoa = :cidade
-               and lu.distrito_pessoa = :distrito
-               and lu.logradouro_pessoa = :logradouro
-        """)
-                    .setParameter("cidade", cidade)
-                    .setParameter("distrito", distrito)
-                    .setParameter("logradouro", logradouro)
-                    .getSingleResult();
-
-            end.logradouroId = resultLogradouro == null ? null : ((Number) resultLogradouro).longValue();
-
-        } catch (Exception e) {
-            end.logradouroId = null;
-        }
-
-        try {
-            Object resultBairro = manager.createNativeQuery("""
-            select l.codigo_ccm
-              from dbo_uni_pessoas.bairros_unificado lu
-              join dbo_uni_pessoas.bairros l
-                on l.cidade = lu.cidade_correios
-               and l.distrito = lu.distrito_correios
-               and l.bairro = lu.bairro_correios
-             where lu.cidade_pessoa = :cidade
-               and lu.distrito_pessoa = :distrito
-               and lu.bairro_pessoa = :bairro
-        """)
-                    .setParameter("cidade", cidade)
-                    .setParameter("distrito", distrito)
-                    .setParameter("bairro", bairro)
-                    .getSingleResult();
-
-            end.bairroId = resultBairro == null ? null : ((Number) resultBairro).longValue();
-
-        } catch (Exception e) {
-            end.bairroId = null;
-        }
-
-        end.cepId = 0L;
-
-        if (end.logradouroId == null && end.bairroId == null) {
-            return null;
-        }
-
-        return end;
-    }
-
-    private static class EnderecoCarga {
-        private Long bairroId;
-        private Long logradouroId;
-        private Long cepId;
-    }
-
-    private void marcarIniciado(Long idControle) {
-        PesCargaPessoasCtrl ctrl = cargaCtrlRepository.findById(idControle)
-                .orElseThrow(() -> new RuntimeException("Controle não encontrado: " + idControle));
-
-        ctrl.setStatus("PROCESSANDO");
-        ctrl.setDataInicio(LocalDateTime.now());
-        ctrl.setDataFim(null);
-        ctrl.setMensagemErro(null);
-        ctrl.setTotalProcessado(ctrl.getTotalProcessado() == null ? 0L : ctrl.getTotalProcessado());
-        ctrl.setTotalErros(ctrl.getTotalErros() == null ? 0L : ctrl.getTotalErros());
-
-        cargaCtrlRepository.save(ctrl);
-    }
-
-    private void somarProcessado(Long idControle) {
-        PesCargaPessoasCtrl ctrl = cargaCtrlRepository.findById(idControle)
-                .orElseThrow(() -> new RuntimeException("Controle não encontrado: " + idControle));
-
-        Long atual = ctrl.getTotalProcessado() == null ? 0L : ctrl.getTotalProcessado();
-        ctrl.setTotalProcessado(atual + 1);
-
-        cargaCtrlRepository.save(ctrl);
-    }
-
-    private void somarErro(Long idControle, String mensagem) {
-        PesCargaPessoasCtrl ctrl = cargaCtrlRepository.findById(idControle)
-                .orElseThrow(() -> new RuntimeException("Controle não encontrado: " + idControle));
-
-        Long atual = ctrl.getTotalErros() == null ? 0L : ctrl.getTotalErros();
-        ctrl.setTotalErros(atual + 1);
-        ctrl.setMensagemErro(mensagem);
-
-        cargaCtrlRepository.save(ctrl);
-    }
-
-    private void marcarFinalizado(Long idControle) {
-        PesCargaPessoasCtrl ctrl = cargaCtrlRepository.findById(idControle)
-                .orElseThrow(() -> new RuntimeException("Controle não encontrado: " + idControle));
-
-        ctrl.setStatus("FINALIZADO");
-        ctrl.setDataFim(LocalDateTime.now());
-
-        cargaCtrlRepository.save(ctrl);
-    }
-
-    private void marcarErroGeral(Long idControle, String mensagem) {
-        PesCargaPessoasCtrl ctrl = cargaCtrlRepository.findById(idControle)
-                .orElseThrow(() -> new RuntimeException("Controle não encontrado: " + idControle));
-
-        ctrl.setStatus("ERRO");
-        ctrl.setDataFim(LocalDateTime.now());
-        ctrl.setMensagemErro(mensagem);
-
-        cargaCtrlRepository.save(ctrl);
-    }
-
-    public Long iniciarControle() {
-        Long idControle = getNextVal("DBO_CCM_PESSOAS.SEQ_CARGA_PESSOAS_CTRL");
-
-        PesCargaPessoasCtrl ctrl = new PesCargaPessoasCtrl();
-        ctrl.setId(idControle);
-        ctrl.setStatus("INICIADO");
-        ctrl.setTotalProcessado(0L);
-        ctrl.setTotalErros(0L);
-
-        cargaCtrlRepository.save(ctrl);
-
-        return idControle;
-    }
-
-    public PesCargaPessoasCtrlDto buscarStatus(Long idControle) {
-        PesCargaPessoasCtrl ctrl = cargaCtrlRepository.findById(idControle)
-                .orElseThrow(() -> new RuntimeException("Controle não encontrado: " + idControle));
-
-        return new PesCargaPessoasCtrlDto(
-                ctrl.getId(),
-                ctrl.getStatus(),
-                ctrl.getTotalProcessado(),
-                ctrl.getTotalErros(),
-                ctrl.getMensagemErro()
-        );
-    }
-
-
-    private Long buscarCodigoCcmDistrito(Long cidade, Long distrito) {
-
-        if (cidade == null || distrito == null) {
-            return null;
-        }
-
-        try {
-            Object result = manager.createNativeQuery("""
-            select d.codigo_ccm
-              from dbo_uni_pessoas.distritos d,
-                   dbo_uni_pessoas.distritos_unificado du
-             where d.cidade = du.cidade_correios
-               and d.distrito = du.distrito_correios
-               and du.cidade_pessoa = :cidade
-               and du.distrito_pessoa = :distrito
-        """)
-                    .setParameter("cidade", cidade)
-                    .setParameter("distrito", distrito)
-                    .getSingleResult();
-
-            return result == null ? null : ((Number) result).longValue();
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private Long buscarLogradouroPorNome(Long distritoId, String logradouroNome) {
-
-        if (distritoId == null || logradouroNome == null || logradouroNome.isBlank()) {
-            return null;
-        }
-
-        try {
-            Object result = manager.createNativeQuery("""
-            select id
-              from dbo_ccm_pessoas.logradouros
-             where distrito_id = :distritoId
-               and upper(nome) = upper(:logradouroNome)
-        """)
-                    .setParameter("distritoId", distritoId)
-                    .setParameter("logradouroNome", logradouroNome.trim())
-                    .getSingleResult();
-
-            return result == null ? null : ((Number) result).longValue();
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private Long buscarBairroPorNome(Long distritoId, String bairroNome) {
-
-        if (distritoId == null || bairroNome == null || bairroNome.isBlank()) {
-            return null;
-        }
-
-        try {
-            Object result = manager.createNativeQuery("""
-            select id
-              from dbo_ccm_pessoas.bairros
-             where distrito_id = :distritoId
-               and upper(nome) = upper(:bairroNome)
-        """)
-                    .setParameter("distritoId", distritoId)
-                    .setParameter("bairroNome", bairroNome.trim())
-                    .getSingleResult();
-
-            return result == null ? null : ((Number) result).longValue();
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static final Set<Long> CEPS_INVALIDOS_FIXOS = Set.of(
-            38100000L
-    );
-
-    private boolean cepInvalido(Long cep) {
-        if (cep == null) {
-            return true;
-        }
-
-        return cep < 10000000L || cep > 99999999L || CEPS_INVALIDOS_FIXOS.contains(cep);
     }
 }

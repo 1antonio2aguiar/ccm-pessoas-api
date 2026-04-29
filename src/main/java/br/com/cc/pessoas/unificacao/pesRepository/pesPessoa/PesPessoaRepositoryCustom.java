@@ -8,4 +8,6 @@ import org.springframework.data.domain.Pageable;
 public interface PesPessoaRepositoryCustom {
     Page<PesPessoaDTO> filtrarCpfUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
     Page<PesPessoaDTO> filtrarCpfDuplicadoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
+    Page<PesPessoaDTO> filtrarCnpjUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
+    Page<PesPessoaDTO> filtrarCnpjDuplicadoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
 }

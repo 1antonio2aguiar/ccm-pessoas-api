@@ -41,8 +41,18 @@ public class PesPessoaController {
         return pesPessoaRepository.filtrarCpfUnicoNaoMigradas(filter, pageable);
     }
 
+    @GetMapping("/cnpj-unico-nao-migradas")
+    public Page<PesPessoaDTO> filtrarCnpjUnicoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
+        return pesPessoaRepository.filtrarCnpjUnicoNaoMigradas(filter, pageable);
+    }
+
     @GetMapping("/cpf-duplicado-nao-migradas")
     public Page<PesPessoaDTO> filtrarCpfDuplicadoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
         return pesPessoaRepository.filtrarCpfDuplicadoNaoMigradas(filter, pageable);
+    }
+
+    @GetMapping("/cnpj-duplicado-nao-migradas")
+    public Page<PesPessoaDTO> filtrarCnpjDuplicadoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
+        return pesPessoaRepository.filtrarCnpjDuplicadoNaoMigradas(filter, pageable);
     }
 }

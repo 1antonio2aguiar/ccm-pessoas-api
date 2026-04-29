@@ -482,4 +482,325 @@ public class PesPessoaRepositoryCustomImpl implements PesPessoaRepositoryCustom 
 
         return Long.valueOf(s);
     }
+
+    /*  CNPJ UNICO */
+    @Override
+    public Page<PesPessoaDTO> filtrarCnpjUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable) {
+
+        StringBuilder fromWhere = new StringBuilder();
+        fromWhere.append("""
+        from dbo_ccm_pessoas.pes_pessoas p
+        where p.fisica_juridica = 'J'
+          and p.cgc_cpf is not null
+          and p.cgc_cpf != 0
+          and not exists (
+                select 1
+                  from dbo_ccm_pessoas.cad_unico_pessoa cup
+                 where cup.cd_origem = p.pessoa
+          )
+          and not exists (
+                select 1
+                  from dbo_ccm_pessoas.pes_pessoas p2
+                 where p2.fisica_juridica = 'J'
+                   and p2.cgc_cpf = p.cgc_cpf
+                   and p2.pessoa <> p.pessoa
+          )
+    """);
+
+        if (filter.getPessoa() != null) {
+            fromWhere.append(" and p.pessoa = :pessoa ");
+        }
+
+        if (StringUtils.hasText(filter.getNome())) {
+            fromWhere.append(" and upper(p.nome) like :nome ");
+        }
+
+        if (filter.getCnpj() != null) {
+            fromWhere.append(" and p.cgc_cpf = :cnpj ");
+        }
+
+        String orderBy = " order by p.nome ";
+
+        String sqlIds = "select p.pessoa " + fromWhere + orderBy;
+        String sqlCount = "select count(*) " + fromWhere;
+
+        Query queryIds = manager.createNativeQuery(sqlIds);
+        Query queryCount = manager.createNativeQuery(sqlCount);
+
+        aplicarParametrosCnpj(filter, queryIds);
+        aplicarParametrosCnpj(filter, queryCount);
+
+        queryIds.setFirstResult((int) pageable.getOffset());
+        queryIds.setMaxResults(pageable.getPageSize());
+
+        @SuppressWarnings("unchecked")
+        List<Number> idsRaw = queryIds.getResultList();
+
+        Long total = ((Number) queryCount.getSingleResult()).longValue();
+
+        if (idsRaw == null || idsRaw.isEmpty()) {
+            return new PageImpl<>(new ArrayList<>(), pageable, total);
+        }
+
+        List<Long> ids = idsRaw.stream().map(Number::longValue).toList();
+
+        String sqlDados = """
+        select
+            p.pessoa,
+            p.nome,
+            p.fisica_juridica,
+            p.data_cadastro,
+            p.cgc_cpf,
+            p.tipo_pessoa,
+            tp.descricao as tipo_pessoa_descricao,
+            p.cidade,
+            c.nome as cidade_nome,
+            c.estado as uf,
+            p.distrito,
+            d.nome as distrito_nome,
+            p.bairro,
+            b.nome as bairro_nome,
+            p.logradouro,
+            l.nome as logradouro_nome,
+            l.tipo_logradouro as tipo_logradouro,
+            p.numero,
+            p.complemento,
+            p.cep,
+            p.data_nascimento,
+            p.estado_civil,
+            p.sexo,
+            p.cidade_nascimento,
+            cast(null as varchar2(200)) as cidade_nascimento_nome,
+            p.pais,
+            p.tipo_documento,
+            td.descricao as tipo_documento_descricao,
+            p.numero_docto,
+            p.orgao_docto,
+            p.emissao_docto,
+            p.titulo_eleitoral,
+            p.zona,
+            p.secao,
+            p.mae,
+            p.pai,
+            p.telefone,
+            p.recado,
+            p.celular,
+            p.fax,
+            p.e_mail,
+            p.pagina_web,
+            p.pessoa_matriz,
+            p.inscricao_estadual,
+            p.fantasia,
+            p.profissao,
+            p.vip,
+            p.observacao,
+            p.conjugue,
+            p.objeto_social,
+            p.microempresa,
+            p.mes_envio_sicom,
+            p.ano_envio_sicom,
+            p.tipo_empresa,
+            p.nome_social,
+            p.deficiente
+        from dbo_ccm_pessoas.pes_pessoas p
+        left join dbo_ccm_pessoas.pes_tipos_pessoas tp
+               on tp.tipo_pessoa = p.tipo_pessoa
+        left join dbo_ccm_pessoas.pes_cidades c
+               on c.cidade = p.cidade
+        left join dbo_ccm_pessoas.pes_distritos d
+               on d.cidade = p.cidade
+              and d.distrito = p.distrito
+        left join dbo_ccm_pessoas.pes_bairros b
+               on b.cidade = p.cidade
+              and b.distrito = p.distrito
+              and b.bairro = p.bairro
+        left join dbo_ccm_pessoas.pes_logradouros l
+               on l.cidade = p.cidade
+              and l.distrito = p.distrito
+              and l.logradouro = p.logradouro
+        left join dbo_ccm_pessoas.pes_tipos_documentos td
+               on td.tipo_documento = p.tipo_documento
+        where p.pessoa in (:ids)
+        order by p.nome
+    """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = manager.createNativeQuery(sqlDados)
+                .setParameter("ids", ids)
+                .getResultList();
+
+        List<PesPessoaDTO> pessoas = rows.stream().map(this::toDto).toList();
+
+        return new PageImpl<>(pessoas, pageable, total);
+    }
+
+    /* CNPJ DUPLICADO */
+    @Override
+    public Page<PesPessoaDTO> filtrarCnpjDuplicadoNaoMigradas(PesPessoaFilter filter, Pageable pageable) {
+
+        StringBuilder fromWhere = new StringBuilder();
+        fromWhere.append("""
+            from dbo_ccm_pessoas.pes_pessoas p
+            where p.fisica_juridica = 'J'
+              and p.cgc_cpf is not null
+              and p.cgc_cpf != 0
+              and p.cgc_cpf NOT IN (191,272)
+              and not exists (
+                    select 1
+                      from dbo_ccm_pessoas.cad_unico_pessoa cup
+                     where cup.cd_origem = p.pessoa
+              )
+              and exists (
+                    select 1
+                      from dbo_ccm_pessoas.pes_pessoas p2
+                     where p2.fisica_juridica = 'J'
+                       and p2.cgc_cpf = p.cgc_cpf
+                       and upper(trim(p2.nome)) = upper(trim(p.nome))
+                       and p2.pessoa <> p.pessoa
+              )
+        """);
+
+        if (filter.getPessoa() != null) {
+            fromWhere.append(" and p.pessoa = :pessoa ");
+        }
+
+        if (StringUtils.hasText(filter.getNome())) {
+            fromWhere.append(" and upper(p.nome) like :nome ");
+        }
+
+        if (filter.getCnpj() != null) {
+            fromWhere.append(" and p.cgc_cpf = :cnpj ");
+        }
+
+        String orderBy = " order by p.cgc_cpf, upper(trim(p.nome)), p.pessoa ";
+
+        String sqlIds = "select p.pessoa " + fromWhere + orderBy;
+        String sqlCount = "select count(*) " + fromWhere;
+
+        Query queryIds = manager.createNativeQuery(sqlIds);
+        Query queryCount = manager.createNativeQuery(sqlCount);
+
+        aplicarParametrosCnpj(filter, queryIds);
+        aplicarParametrosCnpj(filter, queryCount);
+
+        queryIds.setFirstResult((int) pageable.getOffset());
+        queryIds.setMaxResults(pageable.getPageSize());
+
+        @SuppressWarnings("unchecked")
+        List<Object> idsRaw = queryIds.getResultList();
+
+        Long total = ((Number) queryCount.getSingleResult()).longValue();
+
+        if (idsRaw == null || idsRaw.isEmpty()) {
+            return new PageImpl<>(new ArrayList<>(), pageable, total);
+        }
+
+        List<Long> ids = idsRaw.stream()
+                .map(this::num)
+                .filter(Objects::nonNull)
+                .toList();
+
+        String sqlDados = """
+            select
+                p.pessoa,
+                p.nome,
+                p.fisica_juridica,
+                p.data_cadastro,
+                p.cgc_cpf,
+                p.tipo_pessoa,
+                tp.descricao as tipo_pessoa_descricao,
+                p.cidade,
+                c.nome as cidade_nome,
+                c.estado as uf,
+                p.distrito,
+                d.nome as distrito_nome,
+                p.bairro,
+                b.nome as bairro_nome,
+                p.logradouro,
+                l.nome as logradouro_nome,
+                l.tipo_logradouro as tipo_logradouro,
+                p.numero,
+                p.complemento,
+                p.cep,
+                p.data_nascimento,
+                p.estado_civil,
+                p.sexo,
+                p.cidade_nascimento,
+                cast(null as varchar2(200)) as cidade_nascimento_nome,
+                p.pais,
+                p.tipo_documento,
+                td.descricao as tipo_documento_descricao,
+                p.numero_docto,
+                p.orgao_docto,
+                p.emissao_docto,
+                p.titulo_eleitoral,
+                p.zona,
+                p.secao,
+                p.mae,
+                p.pai,
+                p.telefone,
+                p.recado,
+                p.celular,
+                p.fax,
+                p.e_mail,
+                p.pagina_web,
+                p.pessoa_matriz,
+                p.inscricao_estadual,
+                p.fantasia,
+                p.profissao,
+                p.vip,
+                p.observacao,
+                p.conjugue,
+                p.objeto_social,
+                p.microempresa,
+                p.mes_envio_sicom,
+                p.ano_envio_sicom,
+                p.tipo_empresa,
+                p.nome_social,
+                p.deficiente
+            from dbo_ccm_pessoas.pes_pessoas p
+            left join dbo_ccm_pessoas.pes_tipos_pessoas tp
+                   on tp.tipo_pessoa = p.tipo_pessoa
+            left join dbo_ccm_pessoas.pes_cidades c
+                   on c.cidade = p.cidade
+            left join dbo_ccm_pessoas.pes_distritos d
+                   on d.cidade = p.cidade
+                  and d.distrito = p.distrito
+            left join dbo_ccm_pessoas.pes_bairros b
+                   on b.cidade = p.cidade
+                  and b.distrito = p.distrito
+                  and b.bairro = p.bairro
+            left join dbo_ccm_pessoas.pes_logradouros l
+                   on l.cidade = p.cidade
+                  and l.distrito = p.distrito
+                  and l.logradouro = p.logradouro
+            left join dbo_ccm_pessoas.pes_tipos_documentos td
+                   on td.tipo_documento = p.tipo_documento
+            where p.pessoa in (:ids)
+            order by p.cgc_cpf, upper(trim(p.nome)), p.pessoa
+        """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = manager.createNativeQuery(sqlDados)
+                .setParameter("ids", ids)
+                .getResultList();
+
+        List<PesPessoaDTO> pessoas = rows.stream().map(this::toDto).toList();
+
+        return new PageImpl<>(pessoas, pageable, total);
+    }
+
+    private void aplicarParametrosCnpj(PesPessoaFilter filter, Query query) {
+        if (filter.getPessoa() != null) {
+            query.setParameter("pessoa", filter.getPessoa());
+        }
+
+        if (StringUtils.hasText(filter.getNome())) {
+            query.setParameter("nome", "%" + filter.getNome().trim().toUpperCase() + "%");
+        }
+
+        if (filter.getCnpj() != null) {
+            query.setParameter("cnpj", filter.getCnpj());
+        }
+    }
 }

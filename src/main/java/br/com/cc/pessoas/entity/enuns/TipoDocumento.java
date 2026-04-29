@@ -3,7 +3,7 @@ package br.com.cc.pessoas.entity.enuns;
 public enum TipoDocumento {
     CTPS(0,"CTPS"),
     CNH(1,"CNH"),
-    INSCRIÇÃO_MUNICIPAL(2,"INSCRIÇÃO MUNICIPAL"),
+    INSCRIÇÃO_ESTADUAL(2,"INSCRIÇÃO ESTADUAL"),
     PASSAPORTE(3,"PASSAPORTE"),
     RESERVISTA(4,"RESERVISTA"),
     RG(5,"RG"),
