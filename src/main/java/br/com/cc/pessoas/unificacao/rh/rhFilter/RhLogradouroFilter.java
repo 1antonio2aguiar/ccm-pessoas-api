@@ -1,12 +1,12 @@
-package br.com.cc.pessoas.unificacao.pesFilter;
+package br.com.cc.pessoas.unificacao.rh.rhFilter;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class PesBairroFilter {
-    private Long bairro;
+public class RhLogradouroFilter {
+    private Long logradouro;
     private String nome;
 
     private Long cidade;
