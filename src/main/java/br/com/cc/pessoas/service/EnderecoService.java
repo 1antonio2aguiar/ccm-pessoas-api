@@ -77,9 +77,17 @@ public class EnderecoService {
         endereco.setPessoa(pessoa);
 
         //Busco cep
-        Cep cep = cepRepository.findById(dados.cepId())
-                .orElseThrow(() -> new ObjectNotFoundException("CEP com ID " + dados.cepId() + " não encontrado."));
-        endereco.setCep(cep);
+        if (dados.cepId() != null) {
+
+            Cep cep = cepRepository.findById(dados.cepId())
+                    .orElseThrow(() ->
+                            new ObjectNotFoundException(
+                                    "CEP com ID " + dados.cepId() + " não encontrado."
+                            )
+                    );
+
+            endereco.setCep(cep);
+        }
 
         //Busco logradouro
         Logradouro logradouro = logradouroRepository.findById(dados.logradouroId())
@@ -105,10 +113,18 @@ public class EnderecoService {
                 .orElseThrow(() -> new ObjectNotFoundException("Endereço não cadastrado. Id: " + id));
         BeanUtils.copyProperties(dados, enderecoUpd, "id");
 
-        //Busco cep
-        Cep cep = cepRepository.findById(dados.cepId())
-                .orElseThrow(() -> new ObjectNotFoundException("CEP com ID " + dados.cepId() + " não encontrado."));
-        enderecoUpd.setCep(cep);
+        // Busco cep
+        if (dados.cepId() != null) {
+
+            Cep cep = cepRepository.findById(dados.cepId())
+                    .orElseThrow(() ->
+                            new ObjectNotFoundException(
+                                    "CEP com ID " + dados.cepId() + " não encontrado."
+                            )
+                    );
+
+            enderecoUpd.setCep(cep);
+        }
 
         //Busco logradouro
         Logradouro logradouro = logradouroRepository.findById(dados.logradouroId())

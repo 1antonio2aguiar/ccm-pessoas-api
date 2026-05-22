@@ -8,7 +8,7 @@ public enum EstadoCivil {
     UNIAO_ESTAVEL(4,"União estável"),
     VIUVO(5,"Viúvo(a)"),
     OUTRO(6,"Outro"),
-    SEPARADO_JUDICI(7,"SEPARADO_JUDICI"),
+    SEPARADO_JUDICI(7,"SEPARADO JUDICI"),
     CONCUBINATO(8,"CONCUBINATO");
     private final Integer codigo;
     private final String descricao;

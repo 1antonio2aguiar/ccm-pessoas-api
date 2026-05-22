@@ -186,15 +186,20 @@ public abstract class RhCargaPessoaUnicoBaseService {
 
         try {
             Object resultLogradouro = manager.createNativeQuery("""
-                select l.codigo_ccm
-                  from dbo_uni_pessoas.logradouros_unificado lu
-                  join dbo_uni_pessoas.logradouros l
-                    on l.cidade = lu.cidade_correios
-                   and l.distrito = lu.distrito_correios
-                   and l.logradouro = lu.logradouro_correios
-                 where lu.cidade_rh = :cidade
-                   and lu.distrito_rh = :distrito
-                   and lu.logradouro_rh = :logradouro
+                select codigo_ccm
+                   from (
+                         select l.codigo_ccm
+                           from dbo_uni_pessoas.logradouros_unificado lu
+                           join dbo_uni_pessoas.logradouros l
+                             on l.cidade = lu.cidade_correios
+                            and l.distrito = lu.distrito_correios
+                            and l.logradouro = lu.logradouro_correios
+                          where lu.cidade_rh = :cidade
+                            and lu.distrito_rh = :distrito
+                            and lu.logradouro_rh = :logradouro
+                          order by l.codigo_ccm
+                        )
+                  where rownum = 1
             """)
                     .setParameter("cidade", cidade)
                     .setParameter("distrito", distrito)
@@ -209,16 +214,21 @@ public abstract class RhCargaPessoaUnicoBaseService {
 
         try {
             Object resultBairro = manager.createNativeQuery("""
-                select b.codigo_ccm
-                  from dbo_uni_pessoas.bairros_unificado bu
-                  join dbo_uni_pessoas.bairros b
-                    on b.cidade = bu.cidade_correios
-                   and b.distrito = bu.distrito_correios
-                   and b.bairro = bu.bairro_correios
-                 where bu.cidade_rh = :cidade
-                   and bu.distrito_rh = :distrito
-                   and bu.bairro_rh = :bairro
-            """)
+                select codigo_ccm
+                      from (
+                            select b.codigo_ccm
+                              from dbo_uni_pessoas.bairros_unificado bu
+                              join dbo_uni_pessoas.bairros b
+                                on b.cidade = bu.cidade_correios
+                               and b.distrito = bu.distrito_correios
+                               and b.bairro = bu.bairro_correios
+                             where bu.cidade_rh = :cidade
+                               and bu.distrito_rh = :distrito
+                               and bu.bairro_rh = :bairro
+                             order by b.codigo_ccm
+                           )
+                     where rownum = 1
+                """)
                     .setParameter("cidade", cidade)
                     .setParameter("distrito", distrito)
                     .setParameter("bairro", bairro)
