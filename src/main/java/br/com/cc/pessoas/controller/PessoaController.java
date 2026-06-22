@@ -56,6 +56,16 @@ public class PessoaController {
                 .body(PessoaDTO.fromPessoa(pessoaSalva));
     }
 
+    @GetMapping("/existe-cpf-cnpj-cad-unico")
+    public ResponseEntity<Boolean> existeCpfCnpjNoCadUnico(
+            @RequestParam Long cpfCnpj,
+            @RequestParam String fisicaJuridica
+    ) {
+        return ResponseEntity.ok(
+                pessoaService.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica)
+        );
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<PessoaDTO> update(
             @PathVariable Long id,

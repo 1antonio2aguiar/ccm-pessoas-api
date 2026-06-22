@@ -5,6 +5,7 @@ public record CadUnicoDashboardResumoDTO(
         Long totalVinculos,
         Long totalOrigemPessoas,
         Long totalOrigemRh,
+        Long totalOrigemSane,
         Long totalCpf,
         Long totalCnpj,
         Long totalSemEndereco,

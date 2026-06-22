@@ -37,6 +37,12 @@ public class CadUnicoDashboardRepository {
 
                 count("""
                     select count(*)
+                      from dbo_ccm_pessoas.cad_unico_pessoa cup
+                     where cup.banco = 'SANE'
+                """),
+
+                count("""
+                    select count(*)
                       from dbo_ccm_pessoas.pessoas p
                      where p.fisica_juridica = 'F'
                 """),

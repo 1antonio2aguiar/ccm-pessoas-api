@@ -10,7 +10,8 @@ public enum TipoDocumento {
     TÍTULOD_DE_ELEITOR(6,"TÍTULO DE ELEITOR"),
     RG_ESTRANGEIRO(7,"RG PARA ESTRANGEIRO"),
     CREA(8,"CREA"),
-    CRM(9,"CRM");
+    CRM(9,"CRM"),
+    CONTRATOS(10,"CONTRATOS");
     private final Integer codigo;
     private final String descricao;
 

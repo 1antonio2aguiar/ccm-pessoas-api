@@ -60,6 +60,8 @@ public abstract class PesCargaPessoaUnicoBaseService {
 
                 for (PesPessoa pessoa : page.getContent()) {
                     try {
+                        validarCpfCnpjNaoDuplicado(pessoa);
+                        
                         processarPessoa(pessoa);
                         somarProcessado(idControle);
                     } catch (Exception e) {
@@ -83,6 +85,8 @@ public abstract class PesCargaPessoaUnicoBaseService {
     public void processarPessoaUnica(Long pessoaId) {
         PesPessoa pessoa = pesPessoaRepository.findById(pessoaId)
                 .orElseThrow(() -> new RuntimeException("Pessoa não encontrada: " + pessoaId));
+
+        validarCpfCnpjNaoDuplicado(pessoa);
 
         processarPessoa(pessoa);
     }
@@ -734,5 +738,25 @@ public abstract class PesCargaPessoaUnicoBaseService {
         protected Long bairroId;
         protected Long logradouroId;
         protected Long cepId;
+    }
+
+    protected void validarCpfCnpjNaoDuplicado(PesPessoa pessoa) {
+        if (pessoa == null || pessoa.getCgcCpf() == null || pessoa.getCgcCpf() == 0L) {
+            throw new RuntimeException("CPF/CNPJ não informado.");
+        }
+
+        Long qtd = ((Number) manager.createNativeQuery("""
+        select count(1)
+          from dbo_ccm_pessoas.pes_pessoas p
+         where p.fisica_juridica = :fisicaJuridica
+           and p.cgc_cpf = :cpfCnpj
+    """)
+                .setParameter("fisicaJuridica", pessoa.getFisicaJuridica())
+                .setParameter("cpfCnpj", pessoa.getCgcCpf())
+                .getSingleResult()).longValue();
+
+        if (qtd > 1) {
+            throw new RuntimeException("CPF/CNPJ duplicado na origem. Use a rotina de duplicados.");
+        }
     }
 }

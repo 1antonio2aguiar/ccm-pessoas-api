@@ -90,6 +90,10 @@ public class CadUnicoPessoaRepositoryCustomImpl implements CadUnicoPessoaReposit
             return buscarCidadeNascimentoRh(cdOrigem);
         }
 
+        if ("SANE".equalsIgnoreCase(banco)) {
+            return buscarCidadeNascimentoSane(cdOrigem);
+        }
+
         return null;
     }
 
@@ -195,6 +199,9 @@ public class CadUnicoPessoaRepositoryCustomImpl implements CadUnicoPessoaReposit
             return buscarEnderecosOrigemRh(cdOrigem);
         }
 
+        if ("SANE".equalsIgnoreCase(banco)) {
+            return buscarEnderecosOrigemSane(cdOrigem);
+        }
         return new ArrayList<>();
     }
 
@@ -313,6 +320,78 @@ public class CadUnicoPessoaRepositoryCustomImpl implements CadUnicoPessoaReposit
                 str(r[14])   // tipoLogradouro
         );
     }
+    private String buscarCidadeNascimentoSane(Long cdOrigem) {
+        try {
+            Object result = manager.createNativeQuery("""
+            select sd.nome || ' - ' || se.estado
+              from dbo_ccm_pessoas.cad_unico_pessoa cup
+              join dbo_ccm_pessoas.sane_pessoas sp
+                on sp.pessoa = cup.cd_origem
+              join dbo_ccm_pessoas.sane_distritos sd
+                on sd.cidade = sp.cidade
+               and sd.distrito = sp.distrito
+              join dbo_ccm_pessoas.sane_cidades sc
+                on sc.cidade = sp.cidade
+              join dbo_ccm_pessoas.sane_estados se
+                on se.estado = sc.estado
+             where cup.cd_origem = :cdOrigem
+               and cup.banco = 'SANE'
+               and rownum = 1
+        """)
+                    .setParameter("cdOrigem", cdOrigem)
+                    .getSingleResult();
 
+            return result == null ? null : String.valueOf(result);
 
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    @SuppressWarnings("unchecked")
+    private List<CadUnicoEnderecoOrigemDTO> buscarEnderecosOrigemSane(Long cdOrigem) {
+        List<Object[]> rows = manager.createNativeQuery("""
+        select
+            'SANE' as banco,
+            cup.cd_origem,
+            cid.cidade,
+            cid.nome cidade_nome,
+            dis.distrito,
+            dis.nome distrito_nome,
+            bai.bairro,
+            bai.nome bairro_nome,
+            log.logradouro,
+            log.nome logradouro_nome,
+            pes.numero,
+            pes.complemento,
+            pes.cep,
+            est.estado,
+            log.tipo_logradouro
+        from dbo_ccm_pessoas.cad_unico_pessoa cup
+        join dbo_ccm_pessoas.sane_pessoas pes
+          on pes.pessoa = cup.cd_origem
+        join dbo_ccm_pessoas.sane_cidades cid
+          on cid.cidade = pes.cidade
+        join dbo_ccm_pessoas.sane_estados est
+          on est.estado = cid.estado
+        join dbo_ccm_pessoas.sane_distritos dis
+          on dis.cidade = pes.cidade
+         and dis.distrito = pes.distrito
+        left join dbo_ccm_pessoas.sane_bairros bai
+          on bai.cidade = pes.cidade
+         and bai.distrito = pes.distrito
+         and bai.bairro = pes.bairro
+        left join dbo_ccm_pessoas.sane_logradouros log
+          on log.cidade = pes.cidade
+         and log.distrito = pes.distrito
+         and log.logradouro = pes.logradouro
+        where cup.cd_origem = :cdOrigem
+          and cup.banco = 'SANE'
+    """)
+                .setParameter("cdOrigem", cdOrigem)
+                .getResultList();
+
+        return rows.stream()
+                .map(this::toEnderecoOrigemDto)
+                .toList();
+    }
 }

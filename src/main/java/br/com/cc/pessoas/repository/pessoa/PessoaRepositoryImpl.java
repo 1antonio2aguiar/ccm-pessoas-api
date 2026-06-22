@@ -125,4 +125,28 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
 
         return manager.createQuery(cq).getSingleResult();
     }
+    @Override
+    public boolean existeCpfCnpjNoCadUnico(Long cpfCnpj, String fisicaJuridica) {
+
+        if (cpfCnpj == null || cpfCnpj == 0L) {
+            return false;
+        }
+
+        if (!StringUtils.hasText(fisicaJuridica)) {
+            return false;
+        }
+
+        Long qtd = ((Number) manager.createNativeQuery("""
+        select count(1)
+          from dbo_ccm_pessoas.cad_unico_pessoa cup
+         where cup.cpf_cnpj = :cpfCnpj
+           and cup.fisica_juridica = :fisicaJuridica
+           and cup.pessoas_cd_unico is not null
+    """)
+                .setParameter("cpfCnpj", cpfCnpj)
+                .setParameter("fisicaJuridica", fisicaJuridica)
+                .getSingleResult()).longValue();
+
+        return qtd > 0;
+    }
 }

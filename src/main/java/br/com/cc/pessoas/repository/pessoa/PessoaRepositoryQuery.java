@@ -12,4 +12,6 @@ public interface PessoaRepositoryQuery {
     List<Pessoa> filtrar(PessoaFilter filter);
 
     Page<Pessoa> filtrar(PessoaFilter filter, Pageable pageable);
+
+    boolean existeCpfCnpjNoCadUnico(Long cpfCnpj, String fisicaJuridica);
 }

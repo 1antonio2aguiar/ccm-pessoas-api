@@ -3,7 +3,6 @@ package br.com.cc.pessoas.service;
 import br.com.cc.pessoas.dto.pessoa.*;
 import br.com.cc.pessoas.entity.*;
 import br.com.cc.pessoas.entity.enuns.EstadoCivil;
-import br.com.cc.pessoas.entity.enuns.TipoDocumento;
 import br.com.cc.pessoas.filter.PessoaFilter;
 import br.com.cc.pessoas.repository.PessoaRepository;
 import br.com.cc.pessoas.repository.TipoPessoaRepository;
@@ -13,18 +12,20 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class PessoaService {
-
     @Autowired
     private PessoaRepository pessoaRepository;
-
     @Autowired
     private TipoPessoaRepository tipoPessoaRepository; // usado só para validar tipoPessoaId
+    @PersistenceContext
+    private EntityManager entityManager;
 
     // ===============================
     // LISTAR
@@ -54,6 +55,9 @@ public class PessoaService {
         return pessoaRepository.findById(id)
                 .map(PessoaDTO::fromPessoa)
                 .orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada"));
+    }
+    public boolean existeCpfCnpjNoCadUnico(Long cpfCnpj, String fisicaJuridica) {
+        return pessoaRepository.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica);
     }
 
     // ===============================
@@ -217,10 +221,45 @@ public class PessoaService {
     // ===============================
     @Transactional
     public void delete(Long id) {
-        if (!pessoaRepository.existsById(id)) {
-            throw new EntityNotFoundException("Pessoa não encontrada");
-        }
-        pessoaRepository.deleteById(id);
+
+        Pessoa pessoa = pessoaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada"));
+
+        deletarVinculosDaPessoa(id);
+
+        pessoaRepository.delete(pessoa);
+        pessoaRepository.flush();
+    }
+
+    private void deletarVinculosDaPessoa(Long pessoaId) {
+
+        entityManager.createNativeQuery("""
+        DELETE FROM DBO_CCM_PESSOAS.CAD_UNICO_PESSOA
+        WHERE PESSOAS_CD_UNICO = :pessoaId
+    """)
+        .setParameter("pessoaId", pessoaId)
+        .executeUpdate();
+
+        entityManager.createNativeQuery("""
+        DELETE FROM DBO_CCM_PESSOAS.ENDERECOS
+        WHERE PESSOA_ID = :pessoaId
+    """)
+        .setParameter("pessoaId", pessoaId)
+        .executeUpdate();
+
+        entityManager.createNativeQuery("""
+        DELETE FROM DBO_CCM_PESSOAS.DOCUMENTOS
+        WHERE PESSOA_ID = :pessoaId
+    """)
+        .setParameter("pessoaId", pessoaId)
+        .executeUpdate();
+
+        entityManager.createNativeQuery("""
+        DELETE FROM DBO_CCM_PESSOAS.CONTATOS
+        WHERE PESSOA_ID = :pessoaId
+    """)
+        .setParameter("pessoaId", pessoaId)
+        .executeUpdate();
     }
 
     private void validarTipoPessoa(Long tipoPessoaId) {

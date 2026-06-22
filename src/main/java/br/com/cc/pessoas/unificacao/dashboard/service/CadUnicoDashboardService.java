@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 public class CadUnicoDashboardService {
 
     private final CadUnicoDashboardRepository repository;
-
     public CadUnicoDashboardResumoDTO buscarResumo() {
         return repository.buscarResumo();
     }
