@@ -6,6 +6,7 @@ import br.com.cc.pessoas.unificacao.saneamento.saneService.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,9 +19,14 @@ public class SanePessoaController {
     private final SaneCargaPessoaJaExisteCadUnicoService saneCargaPessoaJaExisteCadUnicoService;
     private final SaneCargaPessoaCnpjUnicoService saneCargaPessoaCnpjUnicoService;
     private final SaneCargaPessoaCnpjJaExisteCadUnicoService saneCargaPessoaCnpjJaExisteCadUnicoService;
+    private final SaneCargaPessoaCpfDuplicadoService saneCargaPessoaCpfDuplicadoService;
     @GetMapping("/cpf-unico")
     public Page<SanePessoaDTO> filtrarCpfUnico(SanePessoaFilter filter, Pageable pageable) {
         return service.filtrarListaSaneCpfUnico(filter, pageable);
+    }
+    @GetMapping("/cpf-duplicado")
+    public Page<SanePessoaDTO> filtrarCpfDuplicado(SanePessoaFilter filter, Pageable pageable) {
+        return service.filtrarListaSaneCpfDuplicado(filter, pageable);
     }
     @GetMapping("/cnpj-unico")
     public Page<SanePessoaDTO> filtrarCnpjUnico(SanePessoaFilter filter, Pageable pageable) {
@@ -42,5 +48,11 @@ public class SanePessoaController {
     @PostMapping("/processar-cnpj-ja-existe-cad-unico/{pessoaId}")
     public String processarCnpjJaExisteCadUnico(@PathVariable Long pessoaId) {
         return saneCargaPessoaCnpjJaExisteCadUnicoService.processarCnpjJaExisteCadUnico(pessoaId);
+    }
+    @PostMapping("/processar-cpf-duplicado/{pessoaId}")
+    public ResponseEntity<String> processarCpfDuplicado(@PathVariable Long pessoaId) {
+        return ResponseEntity.ok(
+                saneCargaPessoaCpfDuplicadoService.processarPessoaDuplicada(pessoaId)
+        );
     }
 }

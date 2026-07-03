@@ -132,19 +132,30 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
             return false;
         }
 
-        if (!StringUtils.hasText(fisicaJuridica)) {
-            return false;
+        String documento = String.valueOf(cpfCnpj).replaceAll("\\D", "");
+
+        if (documento.length() <= 11) {
+            String cpf = String.format("%011d", cpfCnpj);
+
+            Long qtd = ((Number) manager.createNativeQuery("""
+            select count(1)
+              from DBO_CCM_PESSOAS.DADOS_PF dpf
+             where dpf.CPF = :cpf
+        """)
+                    .setParameter("cpf", cpf)
+                    .getSingleResult()).longValue();
+
+            return qtd > 0;
         }
+
+        String cnpj = String.format("%014d", cpfCnpj);
 
         Long qtd = ((Number) manager.createNativeQuery("""
         select count(1)
-          from dbo_ccm_pessoas.cad_unico_pessoa cup
-         where cup.cpf_cnpj = :cpfCnpj
-           and cup.fisica_juridica = :fisicaJuridica
-           and cup.pessoas_cd_unico is not null
+          from DBO_CCM_PESSOAS.DADOS_PJ dpj
+         where dpj.CNPJ = :cnpj
     """)
-                .setParameter("cpfCnpj", cpfCnpj)
-                .setParameter("fisicaJuridica", fisicaJuridica)
+                .setParameter("cnpj", cnpj)
                 .getSingleResult()).longValue();
 
         return qtd > 0;

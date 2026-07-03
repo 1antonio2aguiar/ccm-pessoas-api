@@ -20,9 +20,13 @@ public class RhCargaPessoaCnpjUnicoService extends RhCargaPessoaUnicoBaseService
     @Override
     @Transactional
     protected void processarPessoa(RhPessoa pessoa) {
-        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
-
         String cnpj = normalizarCnpj(pessoa.getCgcCpf());
+
+        if (cnpjJaExisteNoDadosPj(cnpj)) {
+            return;
+        }
+
+        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
         Long tipoPessoa = getTipoPessoaRh(pessoa);
 
         inserirCadUnicoPessoaJuridicaRh(idPessoa, pessoa, tipoPessoa, cnpj);

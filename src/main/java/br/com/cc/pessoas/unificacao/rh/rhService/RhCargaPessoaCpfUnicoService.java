@@ -21,9 +21,13 @@ public class RhCargaPessoaCpfUnicoService extends RhCargaPessoaUnicoBaseService 
     @Transactional
     protected void processarPessoa(RhPessoa pessoa) {
 
-        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
-
         String cpf = normalizarCpf(pessoa.getCgcCpf());
+
+        if (cpfJaExisteNoDadosPf(cpf)) {
+            return;
+        }
+
+        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
         Long tipoPessoa = getTipoPessoaRh(pessoa);
         Long cidadeNascimentoCcm = buscarCidadeNascimentoCcmRh(pessoa.getCidadeNascimento());
         Integer estadoCivil = mapearEstadoCivil(pessoa.getEstadoCivil());

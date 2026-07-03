@@ -624,4 +624,204 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
             query.setParameter("cnpj", filter.getCnpj());
         }
     }
+
+    /*
+      APARTIR DEAQUI E O METODO PARA LISTAR CFPS DUPLICADOS
+     */
+
+    @Override
+    public Page<SanePessoaDTO> filtrarListaSaneCpfDuplicado(SanePessoaFilter filter, Pageable pageable) {
+
+        StringBuilder filtros = new StringBuilder();
+
+        if (filter.getPessoa() != null) {
+            filtros.append(" and p.pessoa = :pessoa ");
+        }
+
+        if (StringUtils.hasText(filter.getNome())) {
+            filtros.append(" and upper(p.nome) like :nome ");
+        }
+
+        if (filter.getCpf() != null) {
+            filtros.append(" and p.cgc_cpf = :cpf ");
+        }
+
+        if (filter.getDataNascimento() != null) {
+            filtros.append(" and p.data_nascimento >= :dataNascimentoIni ");
+            filtros.append(" and p.data_nascimento < :dataNascimentoFim ");
+        }
+
+        int inicio = (int) pageable.getOffset() + 1;
+        int fim = inicio + pageable.getPageSize();
+
+        String sqlIds = """
+        select pessoa
+          from (
+                select x.pessoa,
+                       row_number() over(order by x.cgc_cpf, x.nome, x.pessoa) rn
+                  from (
+                        select p.pessoa, p.nome, p.cgc_cpf
+                          from dbo_ccm_pessoas.sane_pessoas p
+                         where p.fisica_juridica = 'F'
+                           and p.cgc_cpf is not null
+                           and p.cgc_cpf > 999999999
+                           %s
+
+                           and not exists (
+                                select 1
+                                  from dbo_ccm_pessoas.cad_unico_pessoa cup_sane
+                                 where cup_sane.cd_origem = p.pessoa
+                                   and cup_sane.banco = 'SANE'
+                           )
+
+                           and exists (
+                                select 1
+                                  from dbo_ccm_pessoas.sane_pessoas p2
+                                 where p2.fisica_juridica = 'F'
+                                   and p2.cgc_cpf = p.cgc_cpf
+                                   and p2.pessoa <> p.pessoa
+                           )
+                       ) x
+               )
+         where rn between :inicio and :fim
+    """.formatted(filtros);
+
+        Query queryIds = manager.createNativeQuery(sqlIds);
+        aplicarParametros(filter, queryIds);
+        queryIds.setParameter("inicio", inicio);
+        queryIds.setParameter("fim", fim);
+
+        @SuppressWarnings("unchecked")
+        List<Number> idsRaw = queryIds.getResultList();
+
+        if (idsRaw == null || idsRaw.isEmpty()) {
+            return new PageImpl<>(new ArrayList<>(), pageable, 0);
+        }
+
+        boolean hasNext = idsRaw.size() > pageable.getPageSize();
+
+        if (hasNext) {
+            idsRaw = idsRaw.subList(0, pageable.getPageSize());
+        }
+
+        List<Long> ids = idsRaw.stream()
+                .map(Number::longValue)
+                .toList();
+
+        String sqlDados = """
+        select
+            p.pessoa,
+            p.nome,
+            p.fisica_juridica,
+            p.data_cadastro,
+            p.cgc_cpf,
+
+            p.tipo_pessoa,
+            tp.descricao as tipo_pessoa_descricao,
+
+            p.cidade,
+            c.nome as cidade_nome,
+            c.estado as uf,
+
+            p.distrito,
+            d.nome as distrito_nome,
+
+            p.bairro,
+            b.nome as bairro_nome,
+
+            p.logradouro,
+            l.nome as logradouro_nome,
+            l.tipo_logradouro as tipo_logradouro,
+
+            p.numero,
+            p.complemento,
+            p.cep,
+
+            p.data_nascimento,
+            p.estado_civil,
+            p.sexo,
+
+            p.cidade_nascimento,
+            cast(null as varchar2(200)) as cidade_nascimento_nome,
+
+            p.pais,
+
+            p.tipo_documento,
+            td.descricao as tipo_documento_descricao,
+
+            p.numero_docto,
+            p.orgao_docto,
+            p.emissao_docto,
+
+            p.titulo_eleitoral,
+            p.zona,
+            p.secao,
+
+            p.mae,
+            p.pai,
+
+            p.telefone,
+            p.recado,
+            p.celular,
+
+            p.e_mail,
+            p.pagina_web,
+
+            p.pessoa_matriz,
+            p.inscricao_estadual,
+            p.fantasia,
+            p.profissao,
+            p.vip,
+
+            p.observacao,
+            p.aposentado,
+            p.inicio_beneficio,
+            p.fim_beneficio,
+            p.renda_mensal,
+
+            'DUPLICADO' as status_cadastro
+
+        from dbo_ccm_pessoas.sane_pessoas p
+
+        left join dbo_ccm_pessoas.sane_tipos_pessoas tp
+               on tp.tipo_pessoa = p.tipo_pessoa
+
+        left join dbo_ccm_pessoas.sane_cidades c
+               on c.cidade = p.cidade
+
+        left join dbo_ccm_pessoas.sane_distritos d
+               on d.cidade = p.cidade
+              and d.distrito = p.distrito
+
+        left join dbo_ccm_pessoas.sane_bairros b
+               on b.cidade = p.cidade
+              and b.distrito = p.distrito
+              and b.bairro = p.bairro
+
+        left join dbo_ccm_pessoas.sane_logradouros l
+               on l.cidade = p.cidade
+              and l.distrito = p.distrito
+              and l.logradouro = p.logradouro
+
+        left join dbo_ccm_pessoas.sane_tipos_documentos td
+               on td.tipo_documento = p.tipo_documento
+
+        where p.pessoa in (:ids)
+
+        order by p.cgc_cpf, p.nome, p.pessoa
+    """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = manager.createNativeQuery(sqlDados)
+                .setParameter("ids", ids)
+                .getResultList();
+
+        List<SanePessoaDTO> pessoas = rows.stream()
+                .map(this::toDto)
+                .toList();
+
+        long totalEstimado = pageable.getOffset() + pessoas.size() + (hasNext ? 1 : 0);
+
+        return new PageImpl<>(pessoas, pageable, totalEstimado);
+    }
 }

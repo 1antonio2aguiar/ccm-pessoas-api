@@ -561,6 +561,39 @@ public abstract class RhCargaPessoaUnicoBaseService {
                 : 1L;
     }
 
+
+    protected boolean cpfJaExisteNoDadosPf(String cpf) {
+        if (cpf == null || cpf.isBlank()) {
+            return false;
+        }
+
+        Number total = (Number) manager.createNativeQuery("""
+            select count(1)
+              from DBO_CCM_PESSOAS.DADOS_PF dpf
+             where dpf.CPF = :cpf
+        """)
+                .setParameter("cpf", cpf)
+                .getSingleResult();
+
+        return total != null && total.longValue() > 0;
+    }
+
+    protected boolean cnpjJaExisteNoDadosPj(String cnpj) {
+        if (cnpj == null || cnpj.isBlank()) {
+            return false;
+        }
+
+        Number total = (Number) manager.createNativeQuery("""
+            select count(1)
+              from DBO_CCM_PESSOAS.DADOS_PJ dpj
+             where dpj.CNPJ = :cnpj
+        """)
+                .setParameter("cnpj", cnpj)
+                .getSingleResult();
+
+        return total != null && total.longValue() > 0;
+    }
+
     protected Long getNextVal(String sequence) {
         return ((Number) manager
                 .createNativeQuery("select " + sequence + ".nextval from dual")

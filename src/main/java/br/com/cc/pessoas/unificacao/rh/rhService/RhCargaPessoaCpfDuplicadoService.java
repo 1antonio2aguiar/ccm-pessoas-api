@@ -36,9 +36,13 @@ public class RhCargaPessoaCpfDuplicadoService extends RhCargaPessoaUnicoBaseServ
     private void processarGrupoDuplicado(List<RhPessoa> grupo) {
         RhPessoa principal = grupo.get(0);
 
-        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
-
         String cpf = buscarCpfPrincipal(grupo);
+
+        if (cpfJaExisteNoDadosPf(cpf)) {
+            return;
+        }
+
+        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
         Long tipoPessoa = getTipoPessoaRh(principal);
         Long cidadeNascimentoCcm = buscarPrimeiraCidadeNascimento(grupo);
         Integer estadoCivil = buscarPrimeiroEstadoCivil(grupo);

@@ -20,4 +20,8 @@ public class SanePessoaService {
     public Page<SanePessoaDTO> filtrarListaSaneCnpjUnico(SanePessoaFilter filter, Pageable pageable) {
         return repository.filtrarListaSaneCnpjUnico(filter, pageable);
     }
+
+    public Page<SanePessoaDTO> filtrarListaSaneCpfDuplicado(SanePessoaFilter filter, Pageable pageable) {
+        return repository.filtrarListaSaneCpfDuplicado(filter, pageable);
+    }
 }

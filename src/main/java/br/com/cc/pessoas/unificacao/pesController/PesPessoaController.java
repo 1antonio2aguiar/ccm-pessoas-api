@@ -30,27 +30,22 @@ public class PesPessoaController {
     public Page<PesPessoaDTO> pesquisar(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
         return service.filtrar(filter, pageable);
     }
-
     @GetMapping("/list")
     public List<PesPessoaDTO> listar(@ModelAttribute PesPessoaFilter filter) {
         return service.filtrar(filter);
     }
-
     @GetMapping("/cpf-unico-nao-migradas")
     public Page<PesPessoaDTO> filtrarCpfUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable) {
         return pesPessoaRepository.filtrarCpfUnicoNaoMigradas(filter, pageable);
     }
-
     @GetMapping("/cnpj-unico-nao-migradas")
     public Page<PesPessoaDTO> filtrarCnpjUnicoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
         return pesPessoaRepository.filtrarCnpjUnicoNaoMigradas(filter, pageable);
     }
-
     @GetMapping("/cpf-duplicado-nao-migradas")
     public Page<PesPessoaDTO> filtrarCpfDuplicadoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
         return pesPessoaRepository.filtrarCpfDuplicadoNaoMigradas(filter, pageable);
     }
-
     @GetMapping("/cnpj-duplicado-nao-migradas")
     public Page<PesPessoaDTO> filtrarCnpjDuplicadoNaoMigradas(@ModelAttribute PesPessoaFilter filter, Pageable pageable) {
         return pesPessoaRepository.filtrarCnpjDuplicadoNaoMigradas(filter, pageable);

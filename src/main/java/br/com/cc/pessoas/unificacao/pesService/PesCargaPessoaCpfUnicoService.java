@@ -18,10 +18,16 @@ public class PesCargaPessoaCpfUnicoService extends PesCargaPessoaUnicoBaseServic
 
     @Override
     protected void processarPessoa(PesPessoa pessoa) {
+        /* Logica para não deixar gravar CPFs duplicado */
+        String cpf = normalizarCpf(pessoa.getCgcCpf());
+
+        if (cpfJaExisteNoDadosPf(cpf)) {
+            return;
+        }
+
         Long idPessoa = getNextVal("SEQ_CAD_UNICO_PESSOA");
         Long cidadeNascimentoCcm = buscarCidadeNascimentoCcm(pessoa.getCidadeNascimento());
         Integer estadoCivil = mapearEstadoCivil(pessoa.getEstadoCivil());
-        String cpf = normalizarCpf(pessoa.getCgcCpf());
         Long tipoPessoa = getTipoPessoa(pessoa);
 
         inserirCadUnicoPessoaFisica(idPessoa, pessoa, tipoPessoa, cpf, cidadeNascimentoCcm);
@@ -31,7 +37,21 @@ public class PesCargaPessoaCpfUnicoService extends PesCargaPessoaUnicoBaseServic
         inserirDocumentosPessoaFisica(idPessoa, pessoa);
         inserirContatos(pessoa, idPessoa);
     }
+    private boolean cpfJaExisteNoDadosPf(String cpf) {
+        if (cpf == null || cpf.isBlank()) {
+            return false;
+        }
 
+        Number total = (Number) manager.createNativeQuery("""
+        select count(1)
+          from DBO_CCM_PESSOAS.DADOS_PF dpf
+         where dpf.CPF = :cpf
+    """)
+                .setParameter("cpf", cpf)
+                .getSingleResult();
+
+        return total != null && total.longValue() > 0;
+    }
     private void inserirCadUnicoPessoaFisica(
             Long idPessoa,
             PesPessoa pessoa,

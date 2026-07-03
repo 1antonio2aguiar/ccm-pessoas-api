@@ -124,7 +124,6 @@ public class SaneCargaPessoaCpfUnicoService {
             throw new IllegalArgumentException("Pessoa SANE não encontrada: " + pessoaId);
         }
     }
-
     private void inserirPessoa(Long novoPessoaId, Object[] sane, Long tipoPessoaId) {
         manager.createNativeQuery("""
             insert into dbo_ccm_pessoas.pessoas (

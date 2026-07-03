@@ -7,5 +7,6 @@ import org.springframework.data.domain.Pageable;
 public interface SanePessoaRepositoryCustom {
 
     Page<SanePessoaDTO> filtrarListaSaneCpfUnico(SanePessoaFilter filter, Pageable pageable);
+    Page<SanePessoaDTO> filtrarListaSaneCpfDuplicado(SanePessoaFilter filter, Pageable pageable);
     Page<SanePessoaDTO> filtrarListaSaneCnpjUnico(SanePessoaFilter filter, Pageable pageable);
 }

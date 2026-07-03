@@ -25,7 +25,6 @@ public class PesPessoaRepositoryCustomImpl implements PesPessoaRepositoryCustom 
 
     @Override
     public Page<PesPessoaDTO> filtrarCpfUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable) {
-
         StringBuilder fromWhere = new StringBuilder();
         fromWhere.append("""
             from dbo_ccm_pessoas.pes_pessoas p
