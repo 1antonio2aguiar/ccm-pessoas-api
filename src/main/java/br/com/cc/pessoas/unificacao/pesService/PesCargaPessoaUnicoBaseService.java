@@ -116,14 +116,13 @@ public abstract class PesCargaPessoaUnicoBaseService {
         """)
                 .setParameter("id", idPessoa)
                 .setParameter("tipoPessoa_id", tipoPessoa)
-                .setParameter("nome", upper(pessoa.getNome()))
+                .setParameter("nome", upper(pessoa.getNome() == null ? null : pessoa.getNome().trim()))
                 .setParameter("dataCadastro", pessoa.getDataCadastro())
                 .setParameter("fisicaJuridica", pessoa.getFisicaJuridica())
                 .setParameter("observacao", pessoa.getObservacao())
                 .setParameter("situacao_id", 1)
                 .executeUpdate();
     }
-
     protected void inserirEnderecoPrincipal(Long idPessoa, PesPessoa pessoa) {
         EnderecoCarga endereco = null;
 

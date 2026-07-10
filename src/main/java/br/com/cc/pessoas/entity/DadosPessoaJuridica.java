@@ -17,6 +17,12 @@ public class DadosPessoaJuridica extends Pessoa {
     @Column(name = "cnpj", length = 14, unique = true)
     private String cnpj;
 
+    @Column(name = "nome")
+    private String nome;
+
+    @Column(name = "estabelecimento")
+    private Long estabelecimento;
+
     @Column(name = "nome_fantasia")
     private String nomeFantasia;
 
