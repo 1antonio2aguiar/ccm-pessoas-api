@@ -12,7 +12,8 @@ public record EnderecoUpdateDTO(
         String complemento,
         Long cepId,
         Long logradouroId,
-        Long bairroId
+        Long bairroId,
+        Long dadosPessoaJuridicaId
 ) {
 
 }

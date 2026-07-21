@@ -31,17 +31,25 @@ public class PessoaController {
     }
 
     @GetMapping("/filter")
-    public Page<PessoaDTO> pesquisar(PessoaFilter filter, Pageable pageable) {
+    public Page<PessoaDTO> pesquisar(
+            PessoaFilter filter,
+            Pageable pageable) {
+
         return pessoaService.pesquisar(filter, pageable);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PessoaDTO> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(pessoaService.findDtoById(id));
+    public ResponseEntity<PessoaDTO> findById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                pessoaService.findDtoById(id)
+        );
     }
 
     @PostMapping
-    public ResponseEntity<PessoaDTO> insert(@RequestBody @Valid PessoaCreateDTO dto) {
+    public ResponseEntity<PessoaDTO> insert(
+            @RequestBody @Valid PessoaCreateDTO dto) {
 
         Pessoa pessoaSalva = pessoaService.insert(dto);
 
@@ -56,31 +64,32 @@ public class PessoaController {
                 .body(PessoaDTO.fromPessoa(pessoaSalva));
     }
 
-    @GetMapping("/existe-cpf-cnpj-cad-unico")
-    public ResponseEntity<Boolean> existeCpfCnpjNoCadUnico(
-            @RequestParam Long cpfCnpj,
-            @RequestParam String fisicaJuridica
-    ) {
-        return ResponseEntity.ok(
-                pessoaService.existeCpfCnpjNoCadUnico(cpfCnpj, fisicaJuridica)
-        );
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<PessoaDTO> update(
             @PathVariable Long id,
             @RequestBody @Valid PessoaUpdateDTO dto) {
 
-        PessoaDTO salva = pessoaService.update(id, dto);
-
-        return ResponseEntity
-                .ok()
-                .body(salva);
+        return ResponseEntity.ok(
+                pessoaService.update(id, dto)
+        );
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         pessoaService.delete(id);
+    }
+
+    @GetMapping("/existe-cpf-cnpj-cad-unico")
+    public ResponseEntity<Boolean> existeCpfCnpjNoCadUnico(
+            @RequestParam Long cpfCnpj,
+            @RequestParam String fisicaJuridica) {
+
+        return ResponseEntity.ok(
+                pessoaService.existeCpfCnpjNoCadUnico(
+                        cpfCnpj,
+                        fisicaJuridica
+                )
+        );
     }
 }

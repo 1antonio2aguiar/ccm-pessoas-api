@@ -9,6 +9,5 @@ import java.util.List;
 
 public interface DocumentoRepositoryQuery {
     List<Documento> filtrar(DocumentoFilter filter);
-
     Page<Documento> filtrar(DocumentoFilter filter, Pageable pageable);
 }

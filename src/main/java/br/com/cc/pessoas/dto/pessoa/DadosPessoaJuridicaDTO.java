@@ -2,16 +2,19 @@ package br.com.cc.pessoas.dto.pessoa;
 
 import br.com.cc.pessoas.entity.DadosPessoaJuridica;
 
-import java.util.Optional;
-
 public record DadosPessoaJuridicaDTO(
 
+        Long id,
         String cnpj,
+        String nome,
+        Long estabelecimento,
         String nomeFantasia,
         String objetoSocial,
         String microEmpresa,
         String conjuge,
-        String tipoEmpresa
+        Integer mesEnvioSicom,
+        Integer anoEnvioSicom,
+        Long tipoEmpresa
 
 ) {
 
@@ -22,16 +25,17 @@ public record DadosPessoaJuridicaDTO(
         }
 
         return new DadosPessoaJuridicaDTO(
+                pj.getId(),
                 pj.getCnpj(),
+                pj.getNome(),
+                pj.getEstabelecimento(),
                 pj.getNomeFantasia(),
                 pj.getObjetoSocial(),
                 pj.getMicroEmpresa(),
                 pj.getConjuge(),
+                pj.getMesEnvioSicom(),
+                pj.getAnoEnvioSicom(),
                 pj.getTipoEmpresa()
         );
-    }
-
-    public static DadosPessoaJuridicaDTO fromOptional(Optional<DadosPessoaJuridica> pj) {
-        return pj.map(DadosPessoaJuridicaDTO::fromEntity).orElse(null);
     }
 }

@@ -9,6 +9,5 @@ import java.util.List;
 
 public interface ContatoRepositoryQuery {
     List<Contato> filtrar(ContatoFilter filter);
-
     Page<Contato> filtrar(ContatoFilter filter, Pageable pageable);
 }

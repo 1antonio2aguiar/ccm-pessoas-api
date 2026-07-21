@@ -12,50 +12,62 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@PrimaryKeyJoinColumn(name = "id")
-public class DadosPessoaFisica extends Pessoa {
+@EqualsAndHashCode(of = "id")
+public class DadosPessoaFisica {
 
-    @Column(name = "cpf", length = 11, unique = true)
+    @Id
+    @Column(name = "ID")
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "ID")
+    private Pessoa pessoa;
+
+    @Column(name = "CPF", length = 11, unique = true)
     private String cpf;
 
-    @Column(name = "nome_social")
+    @Column(name = "NOME_SOCIAL")
     private String nomeSocial;
 
-    @Column(name = "raca")
+    @Column(name = "RACA")
     private String raca;
 
-    @Column(name = "etnia")
+    @Column(name = "ETNIA")
     private String etnia;
 
-    @Column(name = "cor")
+    @Column(name = "COR")
     private String cor;
 
-    @Column(name = "recebe_bf")
+    @Column(name = "RECEBE_BF")
     private String recebeBf;
 
-    @Column(name = "cartao_sus")
+    @Column(name = "CARTAO_SUS")
     private String cartaoSus;
 
-    @Column(name = "sexo")
+    @Column(name = "SEXO")
     private String sexo;
 
-    @Column(name = "estado_civil")
+    @Column(name = "ESTADO_CIVIL")
     private EstadoCivil estadoCivil;
 
-    @Column(name = "local_nascimento_id")
+    @Column(name = "LOCAL_NASCIMENTO_ID")
     private Long localNascimentoId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "local_nascimento_id", insertable = false, updatable = false)
+    @JoinColumn(
+            name = "LOCAL_NASCIMENTO_ID",
+            insertable = false,
+            updatable = false
+    )
     private Cidade localNascimento;
 
-    @Column(name = "mae")
+    @Column(name = "MAE")
     private String mae;
 
-    @Column(name = "pai")
+    @Column(name = "PAI")
     private String pai;
 
-    @Column(name = "data_nascimento")
+    @Column(name = "DATA_NASCIMENTO")
     private LocalDate dataNascimento;
-
 }

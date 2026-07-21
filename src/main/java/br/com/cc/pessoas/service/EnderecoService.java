@@ -3,16 +3,23 @@ package br.com.cc.pessoas.service;
 import br.com.cc.pessoas.dto.endereco.EnderecoCreateDTO;
 import br.com.cc.pessoas.dto.endereco.EnderecoDTO;
 import br.com.cc.pessoas.dto.endereco.EnderecoUpdateDTO;
-import br.com.cc.pessoas.dto.logradouro.LogradouroDTO;
-import br.com.cc.pessoas.entity.*;
+import br.com.cc.pessoas.entity.Bairro;
+import br.com.cc.pessoas.entity.Cep;
+import br.com.cc.pessoas.entity.DadosPessoaJuridica;
+import br.com.cc.pessoas.entity.Endereco;
+import br.com.cc.pessoas.entity.Logradouro;
+import br.com.cc.pessoas.entity.Pessoa;
 import br.com.cc.pessoas.entity.enuns.TipoEndereco;
-import br.com.cc.pessoas.filter.LogradouroFilter;
-import com.pesoas.api.filter.enderecos.EnderecoFilter;
-import br.com.cc.pessoas.repository.*;
+import br.com.cc.pessoas.repository.BairroRepository;
+import br.com.cc.pessoas.repository.CepRepository;
+import br.com.cc.pessoas.repository.EnderecoRepository;
+import br.com.cc.pessoas.repository.LogradouroRepository;
+import br.com.cc.pessoas.repository.PessoaRepository;
 import br.com.cc.pessoas.service.exceptions.DatabaseException;
 import br.com.cc.pessoas.service.exceptions.ObjectNotFoundException;
-
-import org.springframework.beans.BeanUtils;
+import com.pesoas.api.filter.enderecos.EnderecoFilter;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -22,155 +29,398 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class EnderecoService {
+
     @Autowired
     private EnderecoRepository enderecoRepository;
-    @Autowired private CepRepository cepRepository;
-    @Autowired private PessoaRepository pessoaRepository;
-    @Autowired private LogradouroRepository logradouroRepository;
-    @Autowired private BairroRepository bairroRepository;
 
-    public Page<EnderecoDTO> pesquisarComPaginacao(EnderecoFilter filter, Pageable pageable) {
-        Page<Endereco> page = enderecoRepository.filtrar(filter, pageable);
-        return page.map(EnderecoDTO::fromEndereco);
+    @Autowired
+    private CepRepository cepRepository;
+
+    @Autowired
+    private PessoaRepository pessoaRepository;
+
+    @Autowired
+    private LogradouroRepository logradouroRepository;
+
+    @Autowired
+    private BairroRepository bairroRepository;
+
+    @PersistenceContext
+    private EntityManager manager;
+
+    // =========================================================
+    // PESQUISA
+    // =========================================================
+
+    @Transactional(readOnly = true)
+    public Page<EnderecoDTO> pesquisarComPaginacao(
+            EnderecoFilter filter,
+            Pageable pageable) {
+
+        return enderecoRepository
+                .filtrar(filter, pageable)
+                .map(EnderecoDTO::fromEndereco);
     }
 
-    public List<EnderecoDTO> pesquisarSemPaginacao(EnderecoFilter filter) {
+    @Transactional(readOnly = true)
+    public List<EnderecoDTO> pesquisarSemPaginacao(
+            EnderecoFilter filter) {
+
         return enderecoRepository.filtrar(filter)
                 .stream()
                 .map(EnderecoDTO::fromEndereco)
                 .toList();
     }
+
     @Transactional(readOnly = true)
     public EnderecoDTO findById(Long id) {
-        Endereco endereco = enderecoRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException(
-                        "Logradouro não encontrado. Id: " + id));
+
+        Endereco endereco = buscarEndereco(id);
+
         return EnderecoDTO.fromEndereco(endereco);
     }
 
-
     @Transactional(readOnly = true)
-    public List<EnderecoDTO> findEnderecosByPessoaId(Long pessoaId) {
-        if (!pessoaRepository.existsById(pessoaId)) {
-            throw new ObjectNotFoundException("Pessoa com ID " + pessoaId + " não encontrada.");
-        }
-        // Usa o método corrigido do EnderecoRepository
-        List<Endereco> enderecos = enderecoRepository.findByPessoaId(pessoaId);
-        return enderecos.stream()
+    public List<EnderecoDTO> findEnderecosByPessoaId(
+            Long pessoaId) {
+
+        validarExistenciaPessoa(pessoaId);
+
+        return enderecoRepository.findByPessoaId(pessoaId)
+                .stream()
                 .map(EnderecoDTO::fromEndereco)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    //Insert
-    public Endereco insert(EnderecoCreateDTO dados){
-        Endereco endereco = new Endereco();
-        BeanUtils.copyProperties(dados, endereco, "id");
+    // =========================================================
+    // INSERT
+    // =========================================================
 
-        //Busco a pessoa
-        Pessoa pessoa = pessoaRepository.findById(dados.pessoaId())
-                .orElseThrow(() -> new ObjectNotFoundException("Pessoa com ID " + dados.pessoaId() + " não encontrada."));
+    @Transactional
+    public EnderecoDTO insert(EnderecoCreateDTO dados) {
+
+        Pessoa pessoa = buscarPessoa(dados.pessoaId());
+
+        Endereco endereco = new Endereco();
+
         endereco.setPessoa(pessoa);
 
-        //Busco cep
-        if (dados.cepId() != null) {
+        endereco.setDadosPessoaJuridica(
+                buscarEstabelecimentoDaPessoa(
+                        dados.dadosPessoaJuridicaId(),
+                        pessoa
+                )
+        );
 
-            Cep cep = cepRepository.findById(dados.cepId())
-                    .orElseThrow(() ->
-                            new ObjectNotFoundException(
-                                    "CEP com ID " + dados.cepId() + " não encontrado."
-                            )
-                    );
+        preencherDadosBasicos(
+                endereco,
+                dados.numero(),
+                dados.principal(),
+                dados.tipoEndereco(),
+                dados.complemento()
+        );
 
-            endereco.setCep(cep);
+        endereco.setCep(buscarCep(dados.cepId()));
+        endereco.setLogradouro(buscarLogradouro(dados.logradouroId()));
+        endereco.setBairro(buscarBairro(dados.bairroId()));
+
+        if ("S".equalsIgnoreCase(endereco.getPrincipal())) {
+            desmarcarPrincipalDoMesmoTitular(endereco);
         }
 
-        //Busco logradouro
-        Logradouro logradouro = logradouroRepository.findById(dados.logradouroId())
-                .orElseThrow(() -> new ObjectNotFoundException("Logradouro com ID " + dados.logradouroId() + " não encontrado."));
-        endereco.setLogradouro(logradouro);
+        Endereco enderecoSalvo =
+                enderecoRepository.saveAndFlush(endereco);
 
-        //Busco bairro
-        Bairro bairro = bairroRepository.findById(dados.bairroId())
-                .orElseThrow(() -> new ObjectNotFoundException("Bairro com ID " + dados.bairroId() + " não encontrado."));
-        endereco.setBairro(bairro);
-
-        // set o enum
-        endereco.setTipoEndereco(TipoEndereco.toTipoEnderecoEnum(dados.tipoEndereco()));
-
-        Endereco enderecoInsert = enderecoRepository.save(endereco);
-        return enderecoInsert;
+        return EnderecoDTO.fromEndereco(enderecoSalvo);
     }
 
-    // update
-    public Endereco update(Long id, EnderecoUpdateDTO dados){
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
-        Endereco enderecoUpd = enderecoRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Endereço não cadastrado. Id: " + id));
-        BeanUtils.copyProperties(dados, enderecoUpd, "id");
+    @Transactional
+    public EnderecoDTO update(
+            Long id,
+            EnderecoUpdateDTO dados) {
 
-        // Busco cep
-        if (dados.cepId() != null) {
+        Endereco endereco = buscarEndereco(id);
 
-            Cep cep = cepRepository.findById(dados.cepId())
-                    .orElseThrow(() ->
-                            new ObjectNotFoundException(
-                                    "CEP com ID " + dados.cepId() + " não encontrado."
-                            )
-                    );
+        Pessoa pessoa = endereco.getPessoa();
 
-            enderecoUpd.setCep(cep);
+        endereco.setDadosPessoaJuridica(
+                buscarEstabelecimentoDaPessoa(
+                        dados.dadosPessoaJuridicaId(),
+                        pessoa
+                )
+        );
+
+        preencherDadosBasicos(
+                endereco,
+                dados.numero(),
+                dados.principal(),
+                dados.tipoEndereco(),
+                dados.complemento()
+        );
+
+        endereco.setCep(buscarCep(dados.cepId()));
+        endereco.setLogradouro(buscarLogradouro(dados.logradouroId()));
+        endereco.setBairro(buscarBairro(dados.bairroId()));
+
+        if ("S".equalsIgnoreCase(endereco.getPrincipal())) {
+            desmarcarPrincipalDoMesmoTitular(endereco);
         }
 
-        //Busco logradouro
-        Logradouro logradouro = logradouroRepository.findById(dados.logradouroId())
-                .orElseThrow(() -> new ObjectNotFoundException("Logradouro com ID " + dados.logradouroId() + " não encontrado."));
-        enderecoUpd.setLogradouro(logradouro);
+        Endereco enderecoAtualizado =
+                enderecoRepository.saveAndFlush(endereco);
 
-        //Busco bairro
-        Bairro bairro = bairroRepository.findById(dados.bairroId())
-                .orElseThrow(() -> new ObjectNotFoundException("Bairro com ID " + dados.bairroId() + " não encontrado."));
-        enderecoUpd.setBairro(bairro);
-
-        // set o enum
-        enderecoUpd.setTipoEndereco(TipoEndereco.toTipoEnderecoEnum(dados.tipoEndereco()));
-
-        return enderecoRepository.save(enderecoUpd);
+        return EnderecoDTO.fromEndereco(enderecoAtualizado);
     }
 
-    // Delete
-    public void delete(Long id){
-        Endereco enderecoDel = enderecoRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Endereço não cadastrado. Id: " + id));
+    // =========================================================
+    // DELETE
+    // =========================================================
+
+    @Transactional
+    public void delete(Long id) {
+
+        buscarEndereco(id);
+
         try {
             enderecoRepository.deleteById(id);
+            enderecoRepository.flush();
+
         } catch (EmptyResultDataAccessException e) {
-            throw new ObjectNotFoundException(id);
-        } catch (DataIntegrityViolationException e){
+            throw new ObjectNotFoundException(
+                    "Endereço não encontrado. Id: " + id
+            );
+
+        } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
 
+    // =========================================================
+    // ENDEREÇO PRINCIPAL
+    // =========================================================
+
     @Transactional
-    public void definirEnderecoComoPrincipal(Long pessoaId, Long enderecoId) {
-        // A validação da existência da pessoa já está implícita na busca
+    public void definirEnderecoComoPrincipal(
+            Long pessoaId,
+            Long enderecoId) {
 
-        // Esta chamada agora usa a query corrigida que opera em 'pessoa.id'
-        enderecoRepository.marcarTodosComoNaoPrincipalParaPessoa(pessoaId);
+        Endereco endereco = buscarEndereco(enderecoId);
 
-        Endereco enderecoParaAtualizar = enderecoRepository.findById(enderecoId)
-                .orElseThrow(() -> new ObjectNotFoundException("Endereço com ID " + enderecoId + " não encontrado."));
+        if (endereco.getPessoa() == null
+                || !endereco.getPessoa().getId().equals(pessoaId)) {
 
-        // A validação de posse agora é mais simples e robusta
-        if (!enderecoParaAtualizar.getPessoa().getId().equals(pessoaId)) {
-            throw new IllegalArgumentException("O endereço não pertence à pessoa especificada.");
+            throw new IllegalArgumentException(
+                    "O endereço não pertence à pessoa informada."
+            );
         }
 
-        enderecoParaAtualizar.setPrincipal("S");
-        enderecoRepository.save(enderecoParaAtualizar);
+        desmarcarPrincipalDoMesmoTitular(endereco);
+
+        endereco.setPrincipal("S");
+
+        enderecoRepository.save(endereco);
+    }
+
+    /**
+     * Cada titular possui seu próprio endereço principal:
+     *
+     * dadosPessoaJuridica == null:
+     * principal do CPF.
+     *
+     * dadosPessoaJuridica != null:
+     * principal daquele CNPJ específico.
+     */
+    private void desmarcarPrincipalDoMesmoTitular(
+            Endereco endereco) {
+
+        Long pessoaId = endereco.getPessoa().getId();
+
+        DadosPessoaJuridica estabelecimento =
+                endereco.getDadosPessoaJuridica();
+
+        if (estabelecimento == null) {
+
+            manager.createNativeQuery("""
+                    UPDATE DBO_CCM_PESSOAS.ENDERECOS
+                       SET PRINCIPAL = 'N'
+                     WHERE PESSOA_ID = :pessoaId
+                       AND DADOS_PJ_ID IS NULL
+                    """)
+                    .setParameter("pessoaId", pessoaId)
+                    .executeUpdate();
+
+            return;
+        }
+
+        manager.createNativeQuery("""
+                UPDATE DBO_CCM_PESSOAS.ENDERECOS
+                   SET PRINCIPAL = 'N'
+                 WHERE PESSOA_ID = :pessoaId
+                   AND DADOS_PJ_ID = :dadosPessoaJuridicaId
+                """)
+                .setParameter("pessoaId", pessoaId)
+                .setParameter(
+                        "dadosPessoaJuridicaId",
+                        estabelecimento.getId()
+                )
+                .executeUpdate();
+    }
+
+    // =========================================================
+    // PREENCHIMENTO
+    // =========================================================
+
+    private void preencherDadosBasicos(
+            Endereco endereco,
+            Long numero,
+            String principal,
+            Integer tipoEndereco,
+            String complemento) {
+
+        endereco.setNumero(numero);
+        endereco.setComplemento(complemento);
+        endereco.setPrincipal(
+                "S".equalsIgnoreCase(principal) ? "S" : "N"
+        );
+
+        endereco.setTipoEndereco(
+                TipoEndereco.toTipoEnderecoEnum(tipoEndereco)
+        );
+    }
+
+    // =========================================================
+    // BUSCAS E VALIDAÇÕES
+    // =========================================================
+
+    private Endereco buscarEndereco(Long id) {
+
+        return enderecoRepository.findById(id)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "Endereço não encontrado. Id: " + id
+                        )
+                );
+    }
+
+    private Pessoa buscarPessoa(Long pessoaId) {
+
+        return pessoaRepository.findById(pessoaId)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "Pessoa com ID "
+                                        + pessoaId
+                                        + " não encontrada."
+                        )
+                );
+    }
+
+    private void validarExistenciaPessoa(Long pessoaId) {
+
+        if (!pessoaRepository.existsById(pessoaId)) {
+            throw new ObjectNotFoundException(
+                    "Pessoa com ID "
+                            + pessoaId
+                            + " não encontrada."
+            );
+        }
+    }
+
+    /**
+     * Retorna null quando o endereço pertence diretamente ao CPF.
+     *
+     * Quando o ID estiver preenchido, valida se o estabelecimento
+     * realmente pertence à pessoa informada.
+     */
+    private DadosPessoaJuridica buscarEstabelecimentoDaPessoa(
+            Long dadosPessoaJuridicaId,
+            Pessoa pessoa) {
+
+        if (dadosPessoaJuridicaId == null) {
+            return null;
+        }
+
+        DadosPessoaJuridica estabelecimento =
+                manager.find(
+                        DadosPessoaJuridica.class,
+                        dadosPessoaJuridicaId
+                );
+
+        if (estabelecimento == null) {
+            throw new ObjectNotFoundException(
+                    "Estabelecimento com ID "
+                            + dadosPessoaJuridicaId
+                            + " não encontrado."
+            );
+        }
+
+        if (estabelecimento.getPessoa() == null
+                || !estabelecimento
+                .getPessoa()
+                .getId()
+                .equals(pessoa.getId())) {
+
+            throw new IllegalArgumentException(
+                    "O estabelecimento informado não pertence à pessoa."
+            );
+        }
+
+        return estabelecimento;
+    }
+
+    private Cep buscarCep(Long cepId) {
+
+        if (cepId == null) {
+            return null;
+        }
+
+        return cepRepository.findById(cepId)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "CEP com ID "
+                                        + cepId
+                                        + " não encontrado."
+                        )
+                );
+    }
+
+    private Logradouro buscarLogradouro(Long logradouroId) {
+
+        if (logradouroId == null) {
+            throw new IllegalArgumentException(
+                    "O logradouro é obrigatório."
+            );
+        }
+
+        return logradouroRepository.findById(logradouroId)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "Logradouro com ID "
+                                        + logradouroId
+                                        + " não encontrado."
+                        )
+                );
+    }
+
+    private Bairro buscarBairro(Long bairroId) {
+
+        if (bairroId == null) {
+            return null;
+        }
+
+        return bairroRepository.findById(bairroId)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "Bairro com ID "
+                                        + bairroId
+                                        + " não encontrado."
+                        )
+                );
     }
 }

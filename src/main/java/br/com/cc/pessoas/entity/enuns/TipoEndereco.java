@@ -3,7 +3,7 @@ package br.com.cc.pessoas.entity.enuns;
 public enum TipoEndereco {
     CASA(0,"CASA"),
     TRABALHO(1,"TRABALHO"),
-    COMERCIAL(2,"COMERCIAL");
+    COMERCIAL(2,"ESTABELECIMENTO");
     private final Integer codigo;
     private final String descricao;
 

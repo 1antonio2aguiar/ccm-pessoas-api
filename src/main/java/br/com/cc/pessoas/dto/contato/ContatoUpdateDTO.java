@@ -5,9 +5,11 @@ import jakarta.validation.constraints.NotNull;
 public record ContatoUpdateDTO(
         @NotNull
         String contato,
+        Integer tipoContato,
         @NotNull
         String principal,
-        String complemento
+        String complemento,
+        Long dadosPessoaJuridicaId
 ) {
 
 }

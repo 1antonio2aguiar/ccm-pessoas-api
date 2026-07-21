@@ -1,10 +1,9 @@
 package br.com.cc.pessoas.dto.pessoa;
 
-import br.com.cc.pessoas.entity.DadosPessoaFisica;
-import br.com.cc.pessoas.entity.DadosPessoaJuridica;
 import br.com.cc.pessoas.entity.Pessoa;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public record PessoaDTO(
@@ -17,8 +16,9 @@ public record PessoaDTO(
         Long situacaoId,
         LocalDateTime dataCadastro,
         String observacao,
+
         DadosPessoaFisicaDTO dadosPessoaFisica,
-        DadosPessoaJuridicaDTO dadosPessoaJuridica
+        List<DadosPessoaJuridicaDTO> dadosPessoasJuridicas
 
 ) {
 
@@ -28,13 +28,16 @@ public record PessoaDTO(
             return null;
         }
 
-        DadosPessoaFisicaDTO pfDTO = (pessoa instanceof DadosPessoaFisica pf)
-                ? DadosPessoaFisicaDTO.fromEntity(pf)
-                : null;
+        DadosPessoaFisicaDTO pfDTO =
+                DadosPessoaFisicaDTO.fromEntity(pessoa.getDadosPessoaFisica());
 
-        DadosPessoaJuridicaDTO pjDTO = (pessoa instanceof DadosPessoaJuridica pj)
-                ? DadosPessoaJuridicaDTO.fromEntity(pj)
-                : null;
+        List<DadosPessoaJuridicaDTO> pjDTOs =
+                pessoa.getDadosPessoasJuridicas() == null
+                        ? List.of()
+                        : pessoa.getDadosPessoasJuridicas()
+                        .stream()
+                        .map(DadosPessoaJuridicaDTO::fromEntity)
+                        .toList();
 
         return new PessoaDTO(
                 pessoa.getId(),
@@ -45,7 +48,7 @@ public record PessoaDTO(
                 pessoa.getDataCadastro(),
                 pessoa.getObservacao(),
                 pfDTO,
-                pjDTO
+                pjDTOs
         );
     }
 

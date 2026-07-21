@@ -3,6 +3,7 @@ package br.com.cc.pessoas.service;
 import br.com.cc.pessoas.dto.documento.DocumentoCreateDTO;
 import br.com.cc.pessoas.dto.documento.DocumentoDTO;
 import br.com.cc.pessoas.dto.documento.DocumentoUpdateDTO;
+import br.com.cc.pessoas.entity.DadosPessoaJuridica;
 import br.com.cc.pessoas.entity.Documento;
 import br.com.cc.pessoas.entity.Pessoa;
 import br.com.cc.pessoas.entity.enuns.TipoDocumento;
@@ -11,7 +12,8 @@ import br.com.cc.pessoas.repository.DocumentoRepository;
 import br.com.cc.pessoas.repository.PessoaRepository;
 import br.com.cc.pessoas.service.exceptions.DatabaseException;
 import br.com.cc.pessoas.service.exceptions.ObjectNotFoundException;
-import org.springframework.beans.BeanUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -21,83 +23,307 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class DocumentoService {
+
     @Autowired
     private DocumentoRepository documentoRepository;
-    @Autowired private PessoaRepository pessoaRepository;
 
-    public Page<DocumentoDTO> pesquisarComPaginacao(DocumentoFilter filter, Pageable pageable) {
-        Page<Documento> page = documentoRepository.filtrar(filter, pageable);
-        return page.map(DocumentoDTO::fromDocumento);
+    @Autowired
+    private PessoaRepository pessoaRepository;
+
+    @PersistenceContext
+    private EntityManager manager;
+
+    @Transactional(readOnly = true)
+    public Page<DocumentoDTO> pesquisarComPaginacao(
+            DocumentoFilter filter,
+            Pageable pageable) {
+
+        return documentoRepository
+                .filtrar(filter, pageable)
+                .map(DocumentoDTO::fromDocumento);
     }
 
-    public List<DocumentoDTO> pesquisarSemPaginacao(DocumentoFilter filter) {
-        return documentoRepository.filtrar(filter)
+    @Transactional(readOnly = true)
+    public List<DocumentoDTO> pesquisarSemPaginacao(
+            DocumentoFilter filter) {
+
+        return documentoRepository
+                .filtrar(filter)
                 .stream()
                 .map(DocumentoDTO::fromDocumento)
                 .toList();
     }
+
     @Transactional(readOnly = true)
     public DocumentoDTO findById(Long id) {
-        Documento documento = documentoRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException(
-                        "Documento não encontrado. Id: " + id));
+
+        Documento documento = buscarDocumento(id);
+
         return DocumentoDTO.fromDocumento(documento);
     }
 
     @Transactional(readOnly = true)
-    public List<DocumentoDTO> findDocumentoByPessoaId(Long pessoaId) {
-        if (!pessoaRepository.existsById(pessoaId)) {
-            throw new ObjectNotFoundException("Pessoa com ID " + pessoaId + " não encontrada.");
-        }
-        // Usa o método corrigido do contatoRepository
-        List<Documento> documentos = documentoRepository.findByPessoaId(pessoaId);
-        return documentos.stream()
-            .map(DocumentoDTO::fromDocumento)
-            .collect(Collectors.toList());
+    public List<DocumentoDTO> findDocumentoByPessoaId(
+            Long pessoaId) {
+
+        validarExistenciaPessoa(pessoaId);
+
+        return documentoRepository
+                .findByPessoaId(pessoaId)
+                .stream()
+                .map(DocumentoDTO::fromDocumento)
+                .toList();
     }
 
-    //Insert
-    public Documento insert(DocumentoCreateDTO dados){
-        Documento documento = new Documento();
-        BeanUtils.copyProperties(dados, documento, "id");
+    @Transactional
+    public Documento insert(
+            DocumentoCreateDTO dados) {
 
-        //Busco a pessoa
-        Pessoa pessoa = pessoaRepository.findById(dados.pessoaId())
-                .orElseThrow(() -> new ObjectNotFoundException("Pessoa com ID " + dados.pessoaId() + " não encontrada."));
+        Pessoa pessoa = buscarPessoa(dados.pessoaId());
+
+        Documento documento = new Documento();
+
         documento.setPessoa(pessoa);
 
-        // set o enum
-        documento.setTipoDocumento(TipoDocumento.toTipoDocumentoEnum(dados.tipoDocumento()));
+        documento.setDadosPessoaJuridica(
+                buscarEstabelecimentoDaPessoa(
+                        dados.dadosPessoaJuridicaId(),
+                        pessoa
+                )
+        );
 
-        Documento documentoInsert = documentoRepository.save(documento);
-        return documentoInsert;
+        preencherDadosDocumento(
+                documento,
+                dados
+        );
+
+        return documentoRepository.save(documento);
     }
 
-    // update
-    public Documento update(Long id, DocumentoUpdateDTO dados){
+    @Transactional
+    public Documento update(
+            Long id,
+            DocumentoUpdateDTO dados) {
 
-        Documento documentoUpd = documentoRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Documento não cadastrado. Id: " + id));
-        BeanUtils.copyProperties(dados, documentoUpd, "id");
+        Documento documento = buscarDocumento(id);
 
-        return documentoRepository.save(documentoUpd);
+        Pessoa pessoa = documento.getPessoa();
+
+        documento.setDadosPessoaJuridica(
+                buscarEstabelecimentoDaPessoa(
+                        dados.dadosPessoaJuridicaId(),
+                        pessoa
+                )
+        );
+
+        preencherDadosDocumento(
+                documento,
+                dados
+        );
+
+        return documentoRepository.save(documento);
     }
 
-    // Delete
-    public void delete(Long id){
-        Documento documentoDel = documentoRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Documento não cadastrado. Id: " + id));
+    @Transactional
+    public void delete(Long id) {
+
+        buscarDocumento(id);
+
         try {
             documentoRepository.deleteById(id);
+            documentoRepository.flush();
+
         } catch (EmptyResultDataAccessException e) {
-            throw new ObjectNotFoundException(id);
-        } catch (DataIntegrityViolationException e){
+            throw new ObjectNotFoundException(
+                    "Documento não encontrado. Id: " + id
+            );
+
+        } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
 
+    private void preencherDadosDocumento(
+            Documento documento,
+            DocumentoCreateDTO dados) {
+
+        documento.setTipoDocumento(
+                TipoDocumento.toTipoDocumentoEnum(
+                        dados.tipoDocumento()
+                )
+        );
+
+        documento.setNumeroDocumento(
+                dados.numeroDocumento()
+        );
+
+        documento.setDataDocumento(
+                dados.dataDocumento()
+        );
+
+        documento.setDataExpedicao(
+                dados.dataExpedicao()
+        );
+
+        documento.setDocumentoOrigem(
+                dados.documentoOrigem()
+        );
+
+        documento.setOrgaoExpedidor(
+                dados.orgaoExpedidor()
+        );
+
+        documento.setDataPrimeiraCnh(
+                dados.dataPrimeiraCnh()
+        );
+
+        documento.setDataValidade(
+                dados.dataValidade()
+        );
+
+        documento.setCategoriaCnh(
+                dados.categoriaCnh()
+        );
+
+        documento.setZona(
+                dados.zona()
+        );
+
+        documento.setSecao(
+                dados.secao()
+        );
+
+        documento.setObservacao(
+                dados.observacao()
+        );
+    }
+
+    private void preencherDadosDocumento(
+            Documento documento,
+            DocumentoUpdateDTO dados) {
+
+        documento.setTipoDocumento(
+                TipoDocumento.toTipoDocumentoEnum(
+                        dados.tipoDocumento()
+                )
+        );
+
+        documento.setNumeroDocumento(
+                dados.numeroDocumento()
+        );
+
+        documento.setDataDocumento(
+                dados.dataDocumento()
+        );
+
+        documento.setDataExpedicao(
+                dados.dataExpedicao()
+        );
+
+        documento.setDocumentoOrigem(
+                dados.documentoOrigem()
+        );
+
+        documento.setOrgaoExpedidor(
+                dados.orgaoExpedidor()
+        );
+
+        documento.setDataPrimeiraCnh(
+                dados.dataPrimeiraCnh()
+        );
+
+        documento.setDataValidade(
+                dados.dataValidade()
+        );
+
+        documento.setCategoriaCnh(
+                dados.categoriaCnh()
+        );
+
+        documento.setZona(
+                dados.zona()
+        );
+
+        documento.setSecao(
+                dados.secao()
+        );
+
+        documento.setObservacao(
+                dados.observacao()
+        );
+    }
+
+    private Documento buscarDocumento(Long id) {
+
+        return documentoRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "Documento não encontrado. Id: " + id
+                        )
+                );
+    }
+
+    private Pessoa buscarPessoa(Long pessoaId) {
+
+        return pessoaRepository
+                .findById(pessoaId)
+                .orElseThrow(() ->
+                        new ObjectNotFoundException(
+                                "Pessoa com ID "
+                                        + pessoaId
+                                        + " não encontrada."
+                        )
+                );
+    }
+
+    private void validarExistenciaPessoa(Long pessoaId) {
+
+        if (!pessoaRepository.existsById(pessoaId)) {
+            throw new ObjectNotFoundException(
+                    "Pessoa com ID "
+                            + pessoaId
+                            + " não encontrada."
+            );
+        }
+    }
+
+    private DadosPessoaJuridica buscarEstabelecimentoDaPessoa(
+            Long dadosPessoaJuridicaId,
+            Pessoa pessoa) {
+
+        if (dadosPessoaJuridicaId == null) {
+            return null;
+        }
+
+        DadosPessoaJuridica estabelecimento =
+                manager.find(
+                        DadosPessoaJuridica.class,
+                        dadosPessoaJuridicaId
+                );
+
+        if (estabelecimento == null) {
+            throw new ObjectNotFoundException(
+                    "Estabelecimento com ID "
+                            + dadosPessoaJuridicaId
+                            + " não encontrado."
+            );
+        }
+
+        if (estabelecimento.getPessoa() == null
+                || !estabelecimento
+                .getPessoa()
+                .getId()
+                .equals(pessoa.getId())) {
+
+            throw new IllegalArgumentException(
+                    "O estabelecimento informado não pertence à pessoa."
+            );
+        }
+
+        return estabelecimento;
+    }
 }

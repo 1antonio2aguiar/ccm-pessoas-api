@@ -67,4 +67,8 @@ public class Documento {
     @JoinColumn(name = "pessoa_id", nullable = false)
     private Pessoa pessoa;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "DADOS_PJ_ID")
+    private DadosPessoaJuridica dadosPessoaJuridica;
+
 }

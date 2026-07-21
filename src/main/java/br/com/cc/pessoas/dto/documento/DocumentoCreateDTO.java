@@ -19,7 +19,8 @@ public record DocumentoCreateDTO(
         String categoriaCnh,
         Long zona,
         Long secao,
-        String observacao
+        String observacao,
+        Long dadosPessoaJuridicaId
 
 ) {
         public String getNumeroDocumento() {

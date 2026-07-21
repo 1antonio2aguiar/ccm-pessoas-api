@@ -1,10 +1,16 @@
 package br.com.cc.pessoas.repository.pessoa;
 
-import br.com.cc.pessoas.entity.*;
+import br.com.cc.pessoas.entity.DadosPessoaFisica;
+import br.com.cc.pessoas.entity.DadosPessoaJuridica;
+import br.com.cc.pessoas.entity.Pessoa;
 import br.com.cc.pessoas.filter.PessoaFilter;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.util.StringUtils;
 
@@ -23,6 +29,7 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
         CriteriaQuery<Pessoa> cq = cb.createQuery(Pessoa.class);
         Root<Pessoa> root = cq.from(Pessoa.class);
 
+        cq.select(root).distinct(true);
         cq.where(criarRestricoes(filter, cb, root));
 
         return manager.createQuery(cq).getResultList();
@@ -35,6 +42,7 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
         CriteriaQuery<Pessoa> cq = cb.createQuery(Pessoa.class);
         Root<Pessoa> root = cq.from(Pessoa.class);
 
+        cq.select(root).distinct(true);
         cq.where(criarRestricoes(filter, cb, root));
         cq.orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
 
@@ -42,73 +50,73 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
         query.setFirstResult((int) pageable.getOffset());
         query.setMaxResults(pageable.getPageSize());
 
-        return new PageImpl<>(query.getResultList(), pageable, total(filter));
+        return new PageImpl<>(
+                query.getResultList(),
+                pageable,
+                total(filter)
+        );
     }
 
-    private Predicate[] criarRestricoes(PessoaFilter filter,
-                                        CriteriaBuilder cb,
-                                        Root<Pessoa> root) {
+    private Predicate[] criarRestricoes(
+            PessoaFilter filter,
+            CriteriaBuilder cb,
+            Root<Pessoa> root) {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        // 🔹 ID
         if (filter.getId() != null) {
-            predicates.add(cb.equal(root.get(Pessoa_.ID), filter.getId()));
+            predicates.add(
+                    cb.equal(root.get("id"), filter.getId())
+            );
         }
 
-        // 🔹 NOME (LIKE ignore case)
         if (StringUtils.hasText(filter.getNome())) {
             predicates.add(
                     cb.like(
-                            cb.upper(root.get(Pessoa_.NOME)),
+                            cb.upper(root.get("nome")),
                             "%" + filter.getNome().trim().toUpperCase() + "%"
                     )
             );
         }
 
-        // 🔹 CPF (Pessoa Física)
         if (StringUtils.hasText(filter.getCpf())
                 && filter.getCpf().trim().length() >= 4) {
 
-            Root<DadosPessoaFisica> pf = cb.treat(root, DadosPessoaFisica.class);
+            Join<Pessoa, DadosPessoaFisica> pf =
+                    root.join("dadosPessoaFisica", JoinType.INNER);
 
             predicates.add(
-                cb.like(
-                        pf.get(DadosPessoaFisica_.CPF),
-                        filter.getCpf().trim() + "%"
-                )
+                    cb.like(
+                            pf.get("cpf"),
+                            filter.getCpf().trim() + "%"
+                    )
             );
         }
 
-        // 🔹 CNPJ (Pessoa Jurídica)
         if (StringUtils.hasText(filter.getCnpj())) {
 
-            Root<DadosPessoaJuridica> pj = cb.treat(root, DadosPessoaJuridica.class);
+            Join<Pessoa, DadosPessoaJuridica> pj =
+                    root.join("dadosPessoasJuridicas", JoinType.INNER);
 
             predicates.add(
-            cb.like(
-                    pj.get(DadosPessoaJuridica_.CNPJ),
-                    filter.getCnpj().trim()
-            )
+                    cb.like(
+                            pj.get("cnpj"),
+                            filter.getCnpj().trim()
+                    )
             );
         }
 
         if (filter.getDataNascimento() != null) {
 
-            Root<DadosPessoaFisica> pf = cb.treat(root, DadosPessoaFisica.class);
+            Join<Pessoa, DadosPessoaFisica> pf =
+                    root.join("dadosPessoaFisica", JoinType.INNER);
 
-            var ini = filter.getDataNascimento().atStartOfDay();           // 1968-09-14 00:00
-            var fim = filter.getDataNascimento().plusDays(1).atStartOfDay(); // 1968-09-15 00:00
-
-            predicates.add(cb.greaterThanOrEqualTo(
-                    pf.get(DadosPessoaFisica_.DATA_NASCIMENTO),
-                    java.sql.Timestamp.valueOf(ini)
-            ));
-
-            predicates.add(cb.lessThan(
-                    pf.get(DadosPessoaFisica_.DATA_NASCIMENTO),
-                    java.sql.Timestamp.valueOf(fim)
-            ));
+            predicates.add(
+                    cb.equal(
+                            pf.get("dataNascimento"),
+                            filter.getDataNascimento()
+                    )
+            );
         }
 
         return predicates.toArray(new Predicate[0]);
@@ -120,44 +128,51 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
         CriteriaQuery<Long> cq = cb.createQuery(Long.class);
         Root<Pessoa> root = cq.from(Pessoa.class);
 
-        cq.select(cb.count(root));
+        cq.select(cb.countDistinct(root));
         cq.where(criarRestricoes(filter, cb, root));
 
         return manager.createQuery(cq).getSingleResult();
     }
+
     @Override
-    public boolean existeCpfCnpjNoCadUnico(Long cpfCnpj, String fisicaJuridica) {
+    public boolean existeCpfCnpjNoCadUnico(
+            Long cpfCnpj,
+            String fisicaJuridica) {
 
         if (cpfCnpj == null || cpfCnpj == 0L) {
             return false;
         }
 
-        String documento = String.valueOf(cpfCnpj).replaceAll("\\D", "");
+        String documento = String.valueOf(cpfCnpj)
+                .replaceAll("\\D", "");
 
         if (documento.length() <= 11) {
+
             String cpf = String.format("%011d", cpfCnpj);
 
-            Long qtd = ((Number) manager.createNativeQuery("""
-            select count(1)
-              from DBO_CCM_PESSOAS.DADOS_PF dpf
-             where dpf.CPF = :cpf
-        """)
+            Long quantidade = ((Number) manager.createNativeQuery("""
+                    select count(1)
+                      from DBO_CCM_PESSOAS.DADOS_PF dpf
+                     where dpf.CPF = :cpf
+                    """)
                     .setParameter("cpf", cpf)
-                    .getSingleResult()).longValue();
+                    .getSingleResult())
+                    .longValue();
 
-            return qtd > 0;
+            return quantidade > 0;
         }
 
         String cnpj = String.format("%014d", cpfCnpj);
 
-        Long qtd = ((Number) manager.createNativeQuery("""
-        select count(1)
-          from DBO_CCM_PESSOAS.DADOS_PJ dpj
-         where dpj.CNPJ = :cnpj
-    """)
+        Long quantidade = ((Number) manager.createNativeQuery("""
+                select count(1)
+                  from DBO_CCM_PESSOAS.DADOS_PJ dpj
+                 where dpj.CNPJ = :cnpj
+                """)
                 .setParameter("cnpj", cnpj)
-                .getSingleResult()).longValue();
+                .getSingleResult())
+                .longValue();
 
-        return qtd > 0;
+        return quantidade > 0;
     }
 }

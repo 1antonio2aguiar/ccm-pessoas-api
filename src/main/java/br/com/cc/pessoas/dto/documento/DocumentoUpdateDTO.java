@@ -3,6 +3,7 @@ package br.com.cc.pessoas.dto.documento;
 import java.time.LocalDate;
 
 public record DocumentoUpdateDTO(
+        Integer tipoDocumento,
         String numeroDocumento,
         LocalDate dataDocumento,
         LocalDate dataExpedicao,
@@ -14,7 +15,8 @@ public record DocumentoUpdateDTO(
         Long tiutloEleitoral,
         Long zona,
         Long secao,
-        String observacao
+        String observacao,
+        Long dadosPessoaJuridicaId
 ) {
     public String getNumeroDocumento() {
         return numeroDocumento != null ? numeroDocumento.toUpperCase() : "";

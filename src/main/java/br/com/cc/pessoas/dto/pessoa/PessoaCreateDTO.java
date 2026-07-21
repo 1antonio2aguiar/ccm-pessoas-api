@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record PessoaCreateDTO(
 
@@ -15,8 +16,10 @@ public record PessoaCreateDTO(
         String observacao,
 
         DadosPessoaFisicaDTO dadosPessoaFisica,
-        DadosPessoaJuridicaDTO dadosPessoaJuridica
+        List<DadosPessoaJuridicaDTO> dadosPessoasJuridicas
+
 ) {
+
     public String getNome() {
         return nome != null ? nome.toUpperCase() : "";
     }

@@ -11,7 +11,8 @@ public record ContatoCreateDTO(
         String principal,
         String complemento,
         @NotNull
-        Long pessoaId
-) {
+        Long pessoaId,
+        Long dadosPessoaJuridicaId
 
+) {
 }

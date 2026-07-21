@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "PESSOAS", schema = "DBO_CCM_PESSOAS")
@@ -12,29 +14,38 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
-@Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Pessoa {
+public class Pessoa {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pessoa_seq")
-    @SequenceGenerator(name = "pessoa_seq", sequenceName = "SEQ_PESSOAS", allocationSize = 1)
+    @SequenceGenerator(
+            name = "pessoa_seq",
+            sequenceName = "SEQ_PESSOAS",
+            allocationSize = 1
+    )
     private Long id;
 
-    @Column(name = "tipo_pessoa_id")
+    @Column(name = "TIPO_PESSOA_ID")
     private Long tipoPessoaId;
 
-    @Column(name = "nome", nullable = false)
+    @Column(name = "NOME", nullable = false)
     private String nome;
 
-    @Column(name = "fisica_juridica", length = 1)
-    private String fisicaJuridica; // F ou J
+    @Column(name = "FISICA_JURIDICA", length = 1)
+    private String fisicaJuridica;
 
-    @Column(name = "data_cadastro")
+    @Column(name = "DATA_CADASTRO")
     private LocalDateTime dataCadastro;
 
-    @Column(name = "observacao")
+    @Column(name = "OBSERVACAO")
     private String observacao;
 
-    @Column(name = "situacao_id")
+    @Column(name = "SITUACAO_ID")
     private Long situacaoId;
+
+    @OneToOne(mappedBy = "pessoa", fetch = FetchType.LAZY)
+    private DadosPessoaFisica dadosPessoaFisica;
+
+    @OneToMany(mappedBy = "pessoa", fetch = FetchType.LAZY)
+    private List<DadosPessoaJuridica> dadosPessoasJuridicas = new ArrayList<>();
 }
