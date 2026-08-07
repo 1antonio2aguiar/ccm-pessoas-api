@@ -42,7 +42,8 @@ public class RhCargaPessoaCpfDuplicadoService extends RhCargaPessoaUnicoBaseServ
             return;
         }
 
-        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
+        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_PESSOAS");
+
         Long tipoPessoa = getTipoPessoaRh(principal);
         Long cidadeNascimentoCcm = buscarPrimeiraCidadeNascimento(grupo);
         Integer estadoCivil = buscarPrimeiroEstadoCivil(grupo);

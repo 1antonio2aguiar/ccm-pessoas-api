@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class SaneCargaPessoaJaExisteCadUnicoService {
@@ -98,67 +100,46 @@ public class SaneCargaPessoaJaExisteCadUnicoService {
         }
     }
 
-    private Long localizarPessoaCadUnicoExistente(Object[] sane) {
-        Long cpf = helper.num(sane[3]);
-        String nome = helper.str(sane[1]);
+    private Long localizarPessoaCadUnicoExistente(
+            Object[] sane) {
 
-        if (cpf == null || cpf == 0L || nome == null || nome.isBlank()) {
+        Long cpfNumerico =
+                helper.num(
+                        sane[3]
+                );
+
+        String cpf =
+                helper.normalizarCpf(
+                        cpfNumerico
+                );
+
+        if (cpf == null || cpf.isBlank()) {
             return null;
         }
 
-        try {
-            Object result = manager.createNativeQuery("""
-                select pessoas_cd_unico
+        List<?> resultados =
+                manager.createNativeQuery("""
+                select id
                   from (
-                        select
-                            cup.pessoas_cd_unico,
-                            case
-                                when replace(fn_normaliza_texto(cup.nome), ' ', '') =
-                                     replace(fn_normaliza_texto(:nome), ' ', '')
-                                then 100
-
-                                when replace(fn_normaliza_texto(cup.nome), ' ', '') like
-                                     '%' || replace(fn_normaliza_texto(:nome), ' ', '') || '%'
-                                  or replace(fn_normaliza_texto(:nome), ' ', '') like
-                                     '%' || replace(fn_normaliza_texto(cup.nome), ' ', '') || '%'
-                                then 95
-
-                                else utl_match.edit_distance_similarity(
-                                        replace(fn_normaliza_texto(cup.nome), ' ', ''),
-                                        replace(fn_normaliza_texto(:nome), ' ', '')
-                                     )
-                            end as similaridade
-                          from dbo_ccm_pessoas.cad_unico_pessoa cup
-                         where cup.cpf_cnpj = :cpf
-                           and cup.pessoas_cd_unico is not null
-                           and (
-                                replace(fn_normaliza_texto(cup.nome), ' ', '') =
-                                replace(fn_normaliza_texto(:nome), ' ', '')
-
-                                or replace(fn_normaliza_texto(cup.nome), ' ', '') like
-                                   '%' || replace(fn_normaliza_texto(:nome), ' ', '') || '%'
-
-                                or replace(fn_normaliza_texto(:nome), ' ', '') like
-                                   '%' || replace(fn_normaliza_texto(cup.nome), ' ', '') || '%'
-
-                                or utl_match.edit_distance_similarity(
-                                    replace(fn_normaliza_texto(cup.nome), ' ', ''),
-                                    replace(fn_normaliza_texto(:nome), ' ', '')
-                                ) >= 80
-                           )
-                         order by similaridade desc, cup.banco, cup.id
+                        select dpf.id
+                          from dbo_ccm_pessoas.dados_pf dpf
+                         where trim(dpf.cpf) = :cpf
+                         order by dpf.id
                        )
                  where rownum = 1
             """)
-                    .setParameter("cpf", cpf)
-                    .setParameter("nome", nome)
-                    .getSingleResult();
+                        .setParameter(
+                                "cpf",
+                                cpf
+                        )
+                        .getResultList();
 
-            return helper.num(result);
-
-        } catch (Exception e) {
+        if (resultados.isEmpty()) {
             return null;
         }
+
+        return ((Number) resultados.get(0))
+                .longValue();
     }
 
     private void inserirVinculoCadUnicoPessoa(Long pessoasCdUnico, Object[] sane) {

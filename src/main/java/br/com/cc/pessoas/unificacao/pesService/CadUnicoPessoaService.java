@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.pesService;
 
-import br.com.cc.pessoas.unificacao.pesDto.cadUnicoPessoa.CadUnicoPessoaOrigemDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.cadUnicoPessoa.CadUnicoPessoaOrigemDTO;
 import br.com.cc.pessoas.unificacao.pesRepository.CadUnicoPessoaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

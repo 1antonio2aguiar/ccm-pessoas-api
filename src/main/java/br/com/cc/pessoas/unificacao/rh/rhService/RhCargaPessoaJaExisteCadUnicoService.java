@@ -46,27 +46,33 @@ public class RhCargaPessoaJaExisteCadUnicoService {
 
     }
 
-    private Long buscarPessoaExistenteCadUnico(RhPessoa pessoa) {
+    private Long buscarPessoaExistenteCadUnico(
+            RhPessoa pessoa) {
+
         try {
-            Object result = manager.createNativeQuery("""
-                select pessoas_cd_unico
-                  from (
-                        select cup.pessoas_cd_unico
-                          from dbo_ccm_pessoas.cad_unico_pessoa cup
-                         where cup.cpf_cnpj = :cpfCnpj
-                           and cup.banco = 'PESSOAS'
-                           and replace(transf_caracte(cup.nome), ' ', '') =
-                               replace(transf_caracte(:nome), ' ', '')
-                           and cup.pessoas_cd_unico is not null
-                         order by cup.id
-                       )
-                 where rownum = 1
-            """)
-                    .setParameter("cpfCnpj", pessoa.getCgcCpf())
-                    .setParameter("nome", pessoa.getNome())
+
+            Object result =
+                    manager.createNativeQuery("""
+                    select pessoas_cd_unico
+                      from (
+                            select cup.pessoas_cd_unico
+                              from dbo_ccm_pessoas.cad_unico_pessoa cup
+                             where cup.cpf_cnpj = :cpf
+                               and cup.banco = 'PESSOAS'
+                               and cup.pessoas_cd_unico is not null
+                             order by cup.id
+                           )
+                     where rownum = 1
+                """)
+                    .setParameter(
+                            "cpf",
+                            pessoa.getCgcCpf()
+                    )
                     .getSingleResult();
 
-            return result == null ? null : ((Number) result).longValue();
+            return result == null
+                    ? null
+                    : ((Number) result).longValue();
 
         } catch (Exception e) {
             return null;

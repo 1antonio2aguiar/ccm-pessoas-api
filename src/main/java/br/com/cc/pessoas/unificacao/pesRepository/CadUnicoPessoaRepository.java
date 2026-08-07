@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.pesRepository;
 
-import br.com.cc.pessoas.unificacao.pesEntity.CadUnicoPessoa;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.CadUnicoPessoa;
 import br.com.cc.pessoas.unificacao.pesRepository.cadUnicoPessoa.CadUnicoPessoaRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

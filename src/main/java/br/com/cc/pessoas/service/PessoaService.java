@@ -1,10 +1,6 @@
 package br.com.cc.pessoas.service;
 
-import br.com.cc.pessoas.dto.pessoa.DadosPessoaFisicaDTO;
-import br.com.cc.pessoas.dto.pessoa.DadosPessoaJuridicaDTO;
-import br.com.cc.pessoas.dto.pessoa.PessoaCreateDTO;
-import br.com.cc.pessoas.dto.pessoa.PessoaDTO;
-import br.com.cc.pessoas.dto.pessoa.PessoaUpdateDTO;
+import br.com.cc.pessoas.dto.pessoa.*;
 import br.com.cc.pessoas.entity.DadosPessoaFisica;
 import br.com.cc.pessoas.entity.DadosPessoaJuridica;
 import br.com.cc.pessoas.entity.Pessoa;
@@ -76,9 +72,11 @@ public class PessoaService {
         return PessoaDTO.fromPessoa(pessoa);
     }
 
-    public boolean existeCpfCnpjNoCadUnico(
+    public PessoaCpfCnpjCadUnicoDTO existeCpfCnpjNoCadUnico(
             Long cpfCnpj,
             String fisicaJuridica) {
+
+        //System.err.println("Esta PASSANDO AQUI >>>>>>>>>>>>>>>>>>>>> " + cpfCnpj);
 
         return pessoaRepository.existeCpfCnpjNoCadUnico(
                 cpfCnpj,

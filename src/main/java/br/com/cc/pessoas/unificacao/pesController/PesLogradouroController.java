@@ -1,8 +1,8 @@
 package br.com.cc.pessoas.unificacao.pesController;
 
-import br.com.cc.pessoas.unificacao.pesDto.PesLogradouroDTO;
-import br.com.cc.pessoas.unificacao.pesFilter.PesLogradouroFilter;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.PesLogradouroDTO;
 import br.com.cc.pessoas.unificacao.pesService.PesLogradouroService;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesLogradouroFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

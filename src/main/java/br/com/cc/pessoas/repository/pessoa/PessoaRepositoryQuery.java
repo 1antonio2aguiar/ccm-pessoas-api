@@ -1,5 +1,6 @@
 package br.com.cc.pessoas.repository.pessoa;
 
+import br.com.cc.pessoas.dto.pessoa.PessoaCpfCnpjCadUnicoDTO;
 import br.com.cc.pessoas.entity.Pessoa;
 import br.com.cc.pessoas.filter.PessoaFilter;
 import org.springframework.data.domain.Page;
@@ -13,5 +14,8 @@ public interface PessoaRepositoryQuery {
 
     Page<Pessoa> filtrar(PessoaFilter filter, Pageable pageable);
 
-    boolean existeCpfCnpjNoCadUnico(Long cpfCnpj, String fisicaJuridica);
+    PessoaCpfCnpjCadUnicoDTO existeCpfCnpjNoCadUnico(
+            Long cpfCnpj,
+            String fisicaJuridica
+    );
 }

@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.pesRepository.pesCpfNoNome;
 
-import br.com.cc.pessoas.unificacao.pesDto.pesCpfNoNome.PesPessoaCpfNoNomeDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.pesCpfNoNome.PesPessoaCpfNoNomeDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;

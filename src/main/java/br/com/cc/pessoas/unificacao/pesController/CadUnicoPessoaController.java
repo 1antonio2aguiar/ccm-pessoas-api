@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.pesController;
 
-import br.com.cc.pessoas.unificacao.pesDto.cadUnicoPessoa.CadUnicoPessoaOrigemDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.cadUnicoPessoa.CadUnicoPessoaOrigemDTO;
 import br.com.cc.pessoas.unificacao.pesService.CadUnicoPessoaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

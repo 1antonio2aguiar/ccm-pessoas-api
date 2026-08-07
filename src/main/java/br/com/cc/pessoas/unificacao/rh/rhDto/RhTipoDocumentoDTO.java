@@ -1,6 +1,5 @@
 package br.com.cc.pessoas.unificacao.rh.rhDto;
 
-import br.com.cc.pessoas.unificacao.pesEntity.PesTipoDocumento;
 import br.com.cc.pessoas.unificacao.rh.rhEntity.RhTipoDocumento;
 
 public record RhTipoDocumentoDTO(

@@ -1,0 +1,18 @@
+package br.com.cc.pessoas.unificacao.pessoa.pesFilter;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class PesBairroFilter {
+    private Long bairro;
+    private String nome;
+
+    private Long cidade;
+    private String cidadeNome;
+
+    private Long distrito;
+    private String distritoNome;
+
+}

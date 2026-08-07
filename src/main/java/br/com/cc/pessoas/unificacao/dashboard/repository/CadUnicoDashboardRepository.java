@@ -49,8 +49,7 @@ public class CadUnicoDashboardRepository {
 
                 count("""
                     select count(*)
-                      from dbo_ccm_pessoas.pessoas p
-                     where p.fisica_juridica = 'J'
+                      from dbo_ccm_pessoas.dados_pj
                 """),
 
                 count("""

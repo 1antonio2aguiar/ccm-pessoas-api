@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.pesRepository;
 
-import br.com.cc.pessoas.unificacao.pesEntity.PesTipoDocumento;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesTipoDocumento;
 import br.com.cc.pessoas.unificacao.pesRepository.pesTipoDocumento.PesTipoDocumentoRepositoryQuery;
 import org.springframework.data.jpa.repository.JpaRepository;
 

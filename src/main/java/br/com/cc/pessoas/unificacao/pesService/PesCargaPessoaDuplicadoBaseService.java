@@ -1,9 +1,9 @@
 package br.com.cc.pessoas.unificacao.pesService;
 
-import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
-import br.com.cc.pessoas.unificacao.pesEntity.PesTipoDocumento;
-import br.com.cc.pessoas.unificacao.pesEntity.PesTipoPessoa;
-import br.com.cc.pessoas.unificacao.pesRepository.PesPessoaRepository;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesPessoa;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesTipoDocumento;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesTipoPessoa;
+import br.com.cc.pessoas.unificacao.pessoa.pesRepository.PesPessoaRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;

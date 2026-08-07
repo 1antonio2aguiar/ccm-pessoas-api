@@ -22,72 +22,199 @@ public class SaneCargaPessoaCpfDuplicadoService {
     private final SaneCargaPessoaHelperService helper;
 
     @Transactional
-    public String processarPessoaDuplicada(Long pessoaId) {
+    public String processarPessoaDuplicada(
+            Long pessoaId) {
+
+        return processarGrupoCpfDuplicado(
+                pessoaId,
+                false
+        );
+    }
+
+    @Transactional
+    public String processarPessoaDuplicadaJaExiste(
+            Long pessoaId) {
+
+        return processarGrupoCpfDuplicado(
+                pessoaId,
+                true
+        );
+    }
+
+    private String processarGrupoCpfDuplicado(
+            Long pessoaId,
+            boolean vincularPessoaExistente) {
 
         if (pessoaId == null) {
-            throw new IllegalArgumentException("Código da pessoa do saneamento não informado.");
+            throw new IllegalArgumentException(
+                    "Código da pessoa do saneamento não informado."
+            );
         }
 
-        Object[] saneBase = buscarPessoaSane(pessoaId);
+        Object[] saneBase =
+                buscarPessoaSane(
+                        pessoaId
+                );
 
-        String fisicaJuridica = helper.str(saneBase[2]);
-        Long cpfNumerico = helper.num(saneBase[3]);
+        String fisicaJuridica =
+                helper.str(
+                        saneBase[2]
+                );
+
+        Long cpfNumerico =
+                helper.num(
+                        saneBase[3]
+                );
 
         if (!"F".equalsIgnoreCase(fisicaJuridica)) {
-            throw new IllegalArgumentException("Pessoa SANE não é pessoa física.");
+            throw new IllegalArgumentException(
+                    "Pessoa SANE não é pessoa física."
+            );
         }
 
         if (cpfNumerico == null || cpfNumerico == 0L) {
-            throw new IllegalArgumentException("Pessoa SANE não possui CPF válido.");
+            throw new IllegalArgumentException(
+                    "Pessoa SANE não possui CPF válido."
+            );
         }
 
-        List<Object[]> grupo = buscarGrupoCpfDuplicado(cpfNumerico);
+        String nomeBase =
+                helper.str(
+                        saneBase[1]
+                );
+
+        List<Object[]> grupo =
+            buscarGrupoCpfDuplicado(
+                    cpfNumerico,
+                    nomeBase
+            );
 
         if (grupo.size() <= 1) {
-            throw new IllegalArgumentException("CPF não é duplicado no saneamento. Use a rotina de CPF único.");
+            throw new IllegalArgumentException(
+                    "CPF não é duplicado no saneamento. "
+                            + "Use a rotina de CPF único."
+            );
         }
 
-        validarGrupoNaoVinculado(grupo);
+        validarGrupoNaoVinculado(
+                grupo
+        );
 
-        String cpf = helper.normalizarCpf(cpfNumerico);
+        String cpf =
+                helper.normalizarCpf(
+                        cpfNumerico
+                );
 
-        Long pessoaExistenteCadUnico = buscarPessoaExistenteNoCadUnico(cpfNumerico, saneBase);
+        Long pessoaExistenteCadUnico =
+                buscarPessoaExistenteNoCadUnico(
+                        cpf
+                );
 
+        /*
+         * O CPF já existe no Cadastro Único.
+         */
         if (pessoaExistenteCadUnico != null) {
 
-            for (Object[] sane : grupo) {
-                Long tipoPessoaOrigem = helper.converterTipoPessoa(helper.num(sane[13]));
-                Long cidadeNascimentoOrigem = helper.buscarCidadeNascimentoCcmSane(helper.num(sane[8]));
-
-                inserirCadUnicoPessoa(
-                        pessoaExistenteCadUnico,
-                        sane,
-                        tipoPessoaOrigem,
-                        cpf,
-                        cidadeNascimentoOrigem
+            /*
+             * O processamento normal não pode vincular
+             * automaticamente.
+             *
+             * Essa vinculação somente será permitida quando:
+             *
+             * 1. CPF e nome forem iguais; ou
+             * 2. o usuário confirmar o modal.
+             */
+            if (!vincularPessoaExistente) {
+                throw new IllegalArgumentException(
+                        "O CPF já existe no Cadastro Único. "
+                                + "A vinculação precisa ser confirmada."
                 );
             }
 
-            inserirDocumentosPf(pessoaExistenteCadUnico, grupo);
-            inserirContatos(pessoaExistenteCadUnico, grupo);
-            helper.inserirEnderecosUnicosSane(pessoaExistenteCadUnico, grupo);
+            vincularGrupoPessoaExistente(
+                    pessoaExistenteCadUnico,
+                    grupo,
+                    cpf
+            );
 
-            return "CPF duplicado SANE vinculado a pessoa já existente no Cadastro Único. ID: "
-                    + pessoaExistenteCadUnico + ". Total vinculado: " + grupo.size() + ".";
+            return "CPF duplicado SANE vinculado à pessoa existente "
+                    + "no Cadastro Único. ID: "
+                    + pessoaExistenteCadUnico
+                    + ". Total vinculado: "
+                    + grupo.size()
+                    + ".";
         }
 
-        Long novoPessoaId = helper.getNextVal("DBO_CCM_PESSOAS.SEQ_PESSOAS");
+        /*
+         * O frontend solicitou uma vinculação com pessoa
+         * existente, mas o CPF não foi encontrado.
+         */
+        if (vincularPessoaExistente) {
+            throw new IllegalArgumentException(
+                    "Não foi encontrada uma pessoa no Cadastro Único "
+                            + "com o CPF informado."
+            );
+        }
 
-        Long tipoPessoaId = helper.converterTipoPessoa(helper.num(saneBase[13]));
-        Integer estadoCivil = helper.mapearEstadoCivil(helper.str(saneBase[6]));
-        Long cidadeNascimentoCcm = helper.buscarCidadeNascimentoCcmSane(helper.num(saneBase[8]));
+        /*
+         * CPF ainda não existe:
+         * cria uma nova pessoa para todo o grupo.
+         */
+        Long novoPessoaId =
+                helper.getNextVal(
+                        "DBO_CCM_PESSOAS.SEQ_PESSOAS"
+                );
 
-        inserirPessoa(novoPessoaId, saneBase, tipoPessoaId);
-        inserirDadosPf(novoPessoaId, saneBase, cpf, estadoCivil, cidadeNascimentoCcm);
+        Long tipoPessoaId =
+                helper.converterTipoPessoa(
+                        helper.num(
+                                saneBase[13]
+                        )
+                );
+
+        Integer estadoCivil =
+                helper.mapearEstadoCivil(
+                        helper.str(
+                                saneBase[6]
+                        )
+                );
+
+        Long cidadeNascimentoCcm =
+                helper.buscarCidadeNascimentoCcmSane(
+                        helper.num(
+                                saneBase[8]
+                        )
+                );
+
+        inserirPessoa(
+                novoPessoaId,
+                saneBase,
+                tipoPessoaId
+        );
+
+        inserirDadosPf(
+                novoPessoaId,
+                saneBase,
+                cpf,
+                estadoCivil,
+                cidadeNascimentoCcm
+        );
 
         for (Object[] sane : grupo) {
-            Long tipoPessoaOrigem = helper.converterTipoPessoa(helper.num(sane[13]));
-            Long cidadeNascimentoOrigem = helper.buscarCidadeNascimentoCcmSane(helper.num(sane[8]));
+
+            Long tipoPessoaOrigem =
+                    helper.converterTipoPessoa(
+                            helper.num(
+                                    sane[13]
+                            )
+                    );
+
+            Long cidadeNascimentoOrigem =
+                    helper.buscarCidadeNascimentoCcmSane(
+                            helper.num(
+                                    sane[8]
+                            )
+                    );
 
             inserirCadUnicoPessoa(
                     novoPessoaId,
@@ -98,12 +225,72 @@ public class SaneCargaPessoaCpfDuplicadoService {
             );
         }
 
-        inserirDocumentosPf(novoPessoaId, grupo);
-        inserirContatos(novoPessoaId, grupo);
-        helper.inserirEnderecosUnicosSane(novoPessoaId, grupo);
+        inserirDocumentosPf(
+                novoPessoaId,
+                grupo
+        );
 
-        return "Pessoas SANE com CPF duplicado migradas com sucesso. Novo ID: "
-                + novoPessoaId + ". Total vinculado: " + grupo.size() + ".";
+        inserirContatos(
+                novoPessoaId,
+                grupo
+        );
+
+        helper.inserirEnderecosUnicosSane(
+                novoPessoaId,
+                grupo
+        );
+
+        return "Pessoas SANE com CPF duplicado migradas com sucesso. "
+                + "Novo ID: "
+                + novoPessoaId
+                + ". Total vinculado: "
+                + grupo.size()
+                + ".";
+    }
+    private void vincularGrupoPessoaExistente(
+            Long pessoaExistenteCadUnico,
+            List<Object[]> grupo,
+            String cpf) {
+
+        for (Object[] sane : grupo) {
+
+            Long tipoPessoaOrigem =
+                    helper.converterTipoPessoa(
+                            helper.num(
+                                    sane[13]
+                            )
+                    );
+
+            Long cidadeNascimentoOrigem =
+                    helper.buscarCidadeNascimentoCcmSane(
+                            helper.num(
+                                    sane[8]
+                            )
+                    );
+
+            inserirCadUnicoPessoa(
+                    pessoaExistenteCadUnico,
+                    sane,
+                    tipoPessoaOrigem,
+                    cpf,
+                    cidadeNascimentoOrigem
+            );
+        }
+
+        inserirDocumentosPf(
+                pessoaExistenteCadUnico,
+                grupo
+        );
+
+        inserirContatos(
+                pessoaExistenteCadUnico,
+                grupo
+        );
+
+        helper.inserirEnderecosUnicosSane(
+                pessoaExistenteCadUnico,
+                grupo
+        );
     }
 
     private Object[] buscarPessoaSane(Long pessoaId) {
@@ -120,13 +307,35 @@ public class SaneCargaPessoaCpfDuplicadoService {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Object[]> buscarGrupoCpfDuplicado(Long cpfNumerico) {
-        return manager.createNativeQuery(sqlPessoaSane() + """
-             where p.fisica_juridica = 'F'
-               and p.cgc_cpf = :cpf
-             order by p.pessoa
-        """)
-                .setParameter("cpf", cpfNumerico)
+    private List<Object[]> buscarGrupoCpfDuplicado(
+            Long cpfNumerico,
+            String nomeBase) {
+
+        return manager.createNativeQuery(
+                        sqlPessoaSane() + """
+                 where p.fisica_juridica = 'F'
+                   and p.cgc_cpf = :cpf
+                   and replace(
+                           fn_normaliza_texto(p.nome),
+                           ' ',
+                           ''
+                       ) =
+                       replace(
+                           fn_normaliza_texto(:nome),
+                           ' ',
+                           ''
+                       )
+                 order by p.pessoa
+            """
+                )
+                .setParameter(
+                        "cpf",
+                        cpfNumerico
+                )
+                .setParameter(
+                        "nome",
+                        nomeBase
+                )
                 .getResultList();
     }
 
@@ -451,33 +660,30 @@ public class SaneCargaPessoaCpfDuplicadoService {
         """;
     }
 
-    private Long buscarPessoaExistenteNoCadUnico(Long cpfNumerico, Object[] sane) {
+    private Long buscarPessoaExistenteNoCadUnico(
+            String cpf) {
 
-        String nome = helper.str(sane[1]);
+        if (cpf == null || cpf.isBlank()) {
+            return null;
+        }
 
         @SuppressWarnings("unchecked")
-        List<Number> ids = manager.createNativeQuery("""
-        select cup.pessoas_cd_unico
-          from dbo_ccm_pessoas.cad_unico_pessoa cup
-         where cup.fisica_juridica = 'F'
-           and cup.cpf_cnpj = :cpf
-           and cup.pessoas_cd_unico is not null
-           and (
-                replace(fn_normaliza_texto(cup.nome), ' ', '') =
-                replace(fn_normaliza_texto(:nome), ' ', '')
-
-                or
-
-                utl_match.edit_distance_similarity(
-                    replace(fn_normaliza_texto(cup.nome), ' ', ''),
-                    replace(fn_normaliza_texto(:nome), ' ', '')
-                ) >= 80
-           )
-           and rownum = 1
-    """)
-                .setParameter("cpf", cpfNumerico)
-                .setParameter("nome", nome)
-                .getResultList();
+        List<Number> ids =
+                manager.createNativeQuery("""
+                select id
+                  from (
+                        select dpf.id
+                          from dbo_ccm_pessoas.dados_pf dpf
+                         where trim(dpf.cpf) = :cpf
+                         order by dpf.id
+                       )
+                 where rownum = 1
+            """)
+                        .setParameter(
+                                "cpf",
+                                cpf
+                        )
+                        .getResultList();
 
         if (ids == null || ids.isEmpty()) {
             return null;

@@ -27,13 +27,16 @@ public class RhCargaPessoaCpfUnicoService extends RhCargaPessoaUnicoBaseService 
             return;
         }
 
-        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
+        Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_PESSOAS");
+        Long cadUnicoPessoaId = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
+
         Long tipoPessoa = getTipoPessoaRh(pessoa);
         Long cidadeNascimentoCcm = buscarCidadeNascimentoCcmRh(pessoa.getCidadeNascimento());
         Integer estadoCivil = mapearEstadoCivil(pessoa.getEstadoCivil());
 
-        inserirCadUnicoPessoaFisicaRh(idPessoa, pessoa, tipoPessoa, cpf, cidadeNascimentoCcm);
         inserirPessoaRh(idPessoa, pessoa, tipoPessoa);
+        inserirCadUnicoPessoaFisicaRh(idPessoa, cadUnicoPessoaId, pessoa, tipoPessoa, cpf, cidadeNascimentoCcm);
+
         inserirDadosPfRh(idPessoa, pessoa, cpf, estadoCivil, cidadeNascimentoCcm);
         inserirEnderecoPrincipalRh(idPessoa, pessoa);
         inserirDocumentosPessoaFisicaRh(idPessoa, pessoa);
@@ -45,6 +48,7 @@ public class RhCargaPessoaCpfUnicoService extends RhCargaPessoaUnicoBaseService 
     // ===============================
     private void inserirCadUnicoPessoaFisicaRh(
             Long idPessoa,
+            Long cadUnicoPessoaId,
             RhPessoa pessoa,
             Long tipoPessoa,
             String cpf,
@@ -87,7 +91,7 @@ public class RhCargaPessoaCpfUnicoService extends RhCargaPessoaUnicoBaseService 
                 :pessoasCdUnico
             )
         """)
-                .setParameter("id", idPessoa)
+                .setParameter("id", cadUnicoPessoaId)
                 .setParameter("cdOrigem", pessoa.getPessoa())
                 .setParameter("tipoPessoa", tipoPessoa)
                 .setParameter("nome", upper(pessoa.getNome()))

@@ -1,5 +1,6 @@
 package br.com.cc.pessoas.controller;
 
+import br.com.cc.pessoas.dto.pessoa.PessoaCpfCnpjCadUnicoDTO;
 import br.com.cc.pessoas.dto.pessoa.PessoaCreateDTO;
 import br.com.cc.pessoas.dto.pessoa.PessoaDTO;
 import br.com.cc.pessoas.dto.pessoa.PessoaUpdateDTO;
@@ -81,7 +82,8 @@ public class PessoaController {
     }
 
     @GetMapping("/existe-cpf-cnpj-cad-unico")
-    public ResponseEntity<Boolean> existeCpfCnpjNoCadUnico(
+    public ResponseEntity<PessoaCpfCnpjCadUnicoDTO>
+    existeCpfCnpjNoCadUnico(
             @RequestParam Long cpfCnpj,
             @RequestParam String fisicaJuridica) {
 

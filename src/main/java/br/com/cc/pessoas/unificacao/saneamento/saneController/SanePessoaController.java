@@ -50,9 +50,29 @@ public class SanePessoaController {
         return saneCargaPessoaCnpjJaExisteCadUnicoService.processarCnpjJaExisteCadUnico(pessoaId);
     }
     @PostMapping("/processar-cpf-duplicado/{pessoaId}")
-    public ResponseEntity<String> processarCpfDuplicado(@PathVariable Long pessoaId) {
+    public ResponseEntity<String> processarCpfDuplicado(
+            @PathVariable Long pessoaId) {
+
         return ResponseEntity.ok(
-                saneCargaPessoaCpfDuplicadoService.processarPessoaDuplicada(pessoaId)
+                saneCargaPessoaCpfDuplicadoService
+                        .processarPessoaDuplicada(
+                                pessoaId
+                        )
+        );
+    }
+
+    @PostMapping(
+            "/processar-cpf-duplicado-ja-existe/{pessoaId}"
+    )
+    public ResponseEntity<String>
+    processarCpfDuplicadoJaExiste(
+            @PathVariable Long pessoaId) {
+
+        return ResponseEntity.ok(
+                saneCargaPessoaCpfDuplicadoService
+                        .processarPessoaDuplicadaJaExiste(
+                                pessoaId
+                        )
         );
     }
 }

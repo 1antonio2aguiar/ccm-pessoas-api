@@ -1,7 +1,7 @@
 package br.com.cc.pessoas.unificacao.pesService;
 
 import br.com.cc.pessoas.entity.enuns.TipoDocumento;
-import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesPessoa;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;

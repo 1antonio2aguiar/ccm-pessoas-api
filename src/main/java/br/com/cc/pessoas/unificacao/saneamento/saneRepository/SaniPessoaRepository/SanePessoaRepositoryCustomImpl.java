@@ -59,6 +59,7 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                              where p.fisica_juridica = 'F'
                                and p.cgc_cpf is not null
                                and p.cgc_cpf <> 0
+                               and p.pessoa not in ( 1194000, 1133512)
                                %s
 
                                and not exists (
@@ -174,26 +175,27 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                 p.renda_mensal,
 
                 case
-                    when exists (
-                        select 1
-                          from dbo_ccm_pessoas.cad_unico_pessoa cup
-                         where cup.cpf_cnpj = p.cgc_cpf
-                           and cup.pessoas_cd_unico is not null
-                           and (
-                                replace(fn_normaliza_texto(cup.nome), ' ', '') =
-                                replace(fn_normaliza_texto(p.nome), ' ', '')
+                  when exists (
+                      select 1
+                        from dbo_ccm_pessoas.cad_unico_pessoa cup
+                       where cup.cpf_cnpj = p.cgc_cpf
+                         and cup.pessoas_cd_unico is not null
+                         and replace(
+                                 DBO_CODAU_SANEAMENTO.FN_NORMALIZA_TEXTO(cup.nome),
+                                 ' ',
+                                 ''
+                             ) =
+                             replace(
+                                 DBO_CODAU_SANEAMENTO.FN_NORMALIZA_TEXTO(p.nome),
+                                 ' ',
+                                 ''
+                             )
+                  )
+                  then 'EXISTE NO CAD. ÚNICO'
+              
+                  else 'ÚNICO'
+              end as status_cadastro
                 
-                                or
-                
-                                utl_match.edit_distance_similarity(
-                                    replace(fn_normaliza_texto(cup.nome), ' ', ''),
-                                    replace(fn_normaliza_texto(p.nome), ' ', '')
-                                ) >= 80
-                           )
-                    )
-                    then 'EXISTE NO CAD. ÚNICO'
-                    else 'ÚNICO'
-                end as status_cadastro
             from dbo_ccm_pessoas.sane_pessoas p
 
             left join dbo_ccm_pessoas.sane_tipos_pessoas tp
@@ -269,6 +271,7 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                          where p.fisica_juridica = 'J'
                            and p.cgc_cpf is not null
                            and p.cgc_cpf <> 0
+                           and p.pessoa not in ( 1194000, 1133512) 
                            %s
 
                            and not exists (
@@ -665,6 +668,7 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                          where p.fisica_juridica = 'F'
                            and p.cgc_cpf is not null
                            and p.cgc_cpf > 999999999
+                           and p.pessoa not in ( 1194000, 1133512)
                            %s
 
                            and not exists (
@@ -675,13 +679,27 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                            )
 
                            and exists (
-                                select 1
-                                  from dbo_ccm_pessoas.sane_pessoas p2
-                                 where p2.fisica_juridica = 'F'
-                                   and p2.cgc_cpf = p.cgc_cpf
-                                   and p2.pessoa <> p.pessoa
-                           )
-                       ) x
+                                 select 1
+                                   from dbo_ccm_pessoas.sane_pessoas p2
+                                  where p2.fisica_juridica = 'F'
+                                    and p2.cgc_cpf = p.cgc_cpf
+                                    and p2.pessoa <> p.pessoa
+                                    and replace(
+                                            DBO_CODAU_SANEAMENTO.FN_NORMALIZA_TEXTO(
+                                                    p2.nome
+                                            ),
+                                            ' ',
+                                            ''
+                                        ) =
+                                        replace(
+                                            DBO_CODAU_SANEAMENTO.FN_NORMALIZA_TEXTO(
+                                                    p.nome
+                                            ),
+                                            ' ',
+                                            ''
+                                        )
+                            )
+                       ) x 
                )
          where rn between :inicio and :fim
     """.formatted(filtros);

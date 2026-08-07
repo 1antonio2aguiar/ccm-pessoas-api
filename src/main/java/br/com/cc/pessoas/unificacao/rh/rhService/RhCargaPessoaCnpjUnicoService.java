@@ -29,8 +29,9 @@ public class RhCargaPessoaCnpjUnicoService extends RhCargaPessoaUnicoBaseService
         Long idPessoa = getNextVal("DBO_CCM_PESSOAS.SEQ_CAD_UNICO_PESSOA");
         Long tipoPessoa = getTipoPessoaRh(pessoa);
 
-        inserirCadUnicoPessoaJuridicaRh(idPessoa, pessoa, tipoPessoa, cnpj);
         inserirPessoaRh(idPessoa, pessoa, tipoPessoa);
+        inserirCadUnicoPessoaJuridicaRh(idPessoa, pessoa, tipoPessoa, cnpj);
+
         inserirDadosPjRh(idPessoa, pessoa, cnpj);
         inserirEnderecoPrincipalRh(idPessoa, pessoa);
         inserirDocumentosPessoaJuridicaRh(idPessoa, pessoa);

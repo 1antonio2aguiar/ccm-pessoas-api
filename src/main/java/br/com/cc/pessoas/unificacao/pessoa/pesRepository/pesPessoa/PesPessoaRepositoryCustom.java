@@ -1,0 +1,14 @@
+package br.com.cc.pessoas.unificacao.pessoa.pesRepository.pesPessoa;
+
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.PesPessoaDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesPessoaFilter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface PesPessoaRepositoryCustom {
+    Page<PesPessoaDTO> filtrarCpfUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
+    Page<PesPessoaDTO> filtrarCpfDuplicadoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
+    Page<PesPessoaDTO> filtrarCnpjUnicoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
+    Page<PesPessoaDTO> filtrarCnpjDuplicadoNaoMigradas(PesPessoaFilter filter, Pageable pageable);
+    
+}

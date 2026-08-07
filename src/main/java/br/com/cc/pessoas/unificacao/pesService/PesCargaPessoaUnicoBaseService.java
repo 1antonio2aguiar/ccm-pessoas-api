@@ -3,9 +3,9 @@ package br.com.cc.pessoas.unificacao.pesService;
 import br.com.cc.pessoas.unificacao.controle.ctrlEntity.PesCargaPessoasCtrl;
 import br.com.cc.pessoas.unificacao.controle.ctrlEntity.PesCargaPessoasCtrlDto;
 import br.com.cc.pessoas.unificacao.controle.ctrlEntity.PesCargaPessoasCtrlRepository;
-import br.com.cc.pessoas.unificacao.pesEntity.PesPessoa;
-import br.com.cc.pessoas.unificacao.pesFilter.PesPessoaFilter;
-import br.com.cc.pessoas.unificacao.pesRepository.PesPessoaRepository;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesPessoa;
+import br.com.cc.pessoas.unificacao.pessoa.pesRepository.PesPessoaRepository;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesPessoaFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -34,13 +34,13 @@ public abstract class PesCargaPessoaUnicoBaseService {
 
     protected abstract void processarPessoa(PesPessoa pessoa);
 
-    public Long iniciarCargaLote() {
+    /*public Long iniciarCargaLote() {
         Long idControle = iniciarControle();
         executarCarga(idControle);
         return idControle;
-    }
+    }*/
 
-    @Transactional
+    /*@Transactional
     public void executarCarga(Long idControle) {
         try {
             marcarIniciado(idControle);
@@ -79,7 +79,7 @@ public abstract class PesCargaPessoaUnicoBaseService {
             marcarErroGeral(idControle, e.getMessage());
             throw e;
         }
-    }
+    }*/
 
     @Transactional
     public void processarPessoaUnica(Long pessoaId) {

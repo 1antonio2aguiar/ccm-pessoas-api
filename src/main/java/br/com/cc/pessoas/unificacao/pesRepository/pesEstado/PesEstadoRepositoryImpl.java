@@ -1,8 +1,8 @@
 package br.com.cc.pessoas.unificacao.pesRepository.pesEstado;
 
-import br.com.cc.pessoas.unificacao.pesEntity.PesEstado;
-import br.com.cc.pessoas.unificacao.pesEntity.PesEstado_;
-import br.com.cc.pessoas.unificacao.pesFilter.PesEstadoFilter;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesEstado;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesEstado_;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesEstadoFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;

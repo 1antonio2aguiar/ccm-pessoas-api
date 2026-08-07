@@ -1,8 +1,8 @@
 package br.com.cc.pessoas.unificacao.pesController;
 
-import br.com.cc.pessoas.unificacao.pesDto.PesTipoPessoaDTO;
-import br.com.cc.pessoas.unificacao.pesFilter.PesTipoPessoaFilter;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.PesTipoPessoaDTO;
 import br.com.cc.pessoas.unificacao.pesService.PesTipoPessoaService;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesTipoPessoaFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

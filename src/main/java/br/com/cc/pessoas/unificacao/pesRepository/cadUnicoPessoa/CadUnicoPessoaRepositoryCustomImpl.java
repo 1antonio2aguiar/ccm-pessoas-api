@@ -1,7 +1,7 @@
 package br.com.cc.pessoas.unificacao.pesRepository.cadUnicoPessoa;
 
-import br.com.cc.pessoas.unificacao.pesDto.cadUnicoPessoa.CadUnicoEnderecoOrigemDTO;
-import br.com.cc.pessoas.unificacao.pesDto.cadUnicoPessoa.CadUnicoPessoaOrigemDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.cadUnicoPessoa.CadUnicoEnderecoOrigemDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.cadUnicoPessoa.CadUnicoPessoaOrigemDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;

@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.pesController.pesCpfNoNome;
 
-import br.com.cc.pessoas.unificacao.pesDto.pesCpfNoNome.PesPessoaCpfNoNomeDTO;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.pesCpfNoNome.PesPessoaCpfNoNomeDTO;
 import br.com.cc.pessoas.unificacao.pesService.pesCpfNoNome.PesPessoaCpfNoNomeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,11 +17,11 @@ public class PesPessoaCpfNoNomeController {
 
     private final PesPessoaCpfNoNomeService service;
 
-    @GetMapping
+    /*@GetMapping
     public Page<PesPessoaCpfNoNomeDTO> listar(
             @RequestParam(required = false) String nome,
             Pageable pageable) {
 
         return service.listarCpfNoNome(nome, pageable);
-    }
+    }*/
 }

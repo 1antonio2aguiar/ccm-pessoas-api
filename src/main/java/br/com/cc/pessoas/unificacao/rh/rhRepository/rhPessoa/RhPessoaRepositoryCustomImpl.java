@@ -28,7 +28,7 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
 
         fromWhere.append("""
             from dbo_rh.pessoas p
-            where 1 = 1
+            where p.fisica_juridica = 'F'
               and not exists (
                     select 1
                       from dbo_ccm_pessoas.cad_unico_pessoa cup_rh
@@ -37,9 +37,9 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
               )
         """);
 
-        if (StringUtils.hasText(filter.getFisicaJuridica())) {
+        /*if (StringUtils.hasText(filter.getFisicaJuridica())) {
             fromWhere.append(" and p.fisica_juridica = :fisicaJuridica ");
-        }
+        }*/
 
         if (filter.getPessoa() != null) {
             fromWhere.append(" and p.pessoa = :pessoa ");
@@ -102,7 +102,8 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
                     and exists (
                         select 1
                           from dbo_rh.pessoas p2
-                         where p2.cgc_cpf = p.cgc_cpf
+                         where   p2.fisica_juridica = 'F'
+                           and   p2.cgc_cpf = p.cgc_cpf
                            and replace(transf_caracte(p2.nome), ' ', '') =
                                replace(transf_caracte(p.nome), ' ', '')
                            and p2.pessoa <> p.pessoa
@@ -125,7 +126,7 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
                     and not exists (
                         select 1
                           from dbo_rh.pessoas p2
-                         where p2.cgc_cpf = p.cgc_cpf
+                         where  p2.fisica_juridica = 'F' and p2.cgc_cpf = p.cgc_cpf
                            and replace(transf_caracte(p2.nome), ' ', '') =
                                replace(transf_caracte(p.nome), ' ', '')
                            and p2.pessoa <> p.pessoa
@@ -249,7 +250,7 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
                     when exists (
                         select 1
                           from dbo_rh.pessoas p2
-                         where p2.cgc_cpf = p.cgc_cpf
+                         where  p2.fisica_juridica = 'F' and p2.cgc_cpf = p.cgc_cpf
                            and replace(transf_caracte(p2.nome), ' ', '') =
                                replace(transf_caracte(p.nome), ' ', '')
                            and p2.pessoa <> p.pessoa
@@ -283,7 +284,7 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
             left join dbo_rh.tipos_documentos td
                    on td.tipo_documento = p.tipo_documento
 
-            where p.pessoa in (:ids)
+            where p.pessoa in (:ids) and p.fisica_juridica = 'F' 
 
             order by p.nome, p.cgc_cpf, p.pessoa
         """;
@@ -352,9 +353,9 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
             query.setParameter("cpf", filter.getCpf());
         }
 
-        if (filter.getCnpj() != null) {
+        /*if (filter.getCnpj() != null) {
             query.setParameter("cnpj", filter.getCnpj());
-        }
+        }*/
 
         if (filter.getDataNascimento() != null) {
             LocalDateTime ini = filter.getDataNascimento().atStartOfDay();
@@ -364,9 +365,9 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
             query.setParameter("dataNascimentoFim", Timestamp.valueOf(fim));
         }
 
-        if (StringUtils.hasText(filter.getFisicaJuridica())) {
+        /*if (StringUtils.hasText(filter.getFisicaJuridica())) {
             query.setParameter("fisicaJuridica", filter.getFisicaJuridica().trim().toUpperCase());
-        }
+        }*/
     }
 
     private RhPessoaDTO toDto(Object[] r) {

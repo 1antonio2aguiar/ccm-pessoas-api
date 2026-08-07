@@ -1,9 +1,7 @@
 package br.com.cc.pessoas.unificacao.pesRepository.pesCidade;
 
-import br.com.cc.pessoas.entity.Cidade;
-import br.com.cc.pessoas.filter.CidadeFilter;
-import br.com.cc.pessoas.unificacao.pesEntity.PesCidade;
-import br.com.cc.pessoas.unificacao.pesFilter.PesCidadeFilter;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesCidade;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesCidadeFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

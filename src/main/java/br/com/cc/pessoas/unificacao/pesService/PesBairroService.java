@@ -1,8 +1,8 @@
 package br.com.cc.pessoas.unificacao.pesService;
 
-import br.com.cc.pessoas.unificacao.pesDto.PesBairroDTO;
-import br.com.cc.pessoas.unificacao.pesFilter.PesBairroFilter;
+import br.com.cc.pessoas.unificacao.pessoa.pesDto.PesBairroDTO;
 import br.com.cc.pessoas.unificacao.pesRepository.PesBairroRepository;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesBairroFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

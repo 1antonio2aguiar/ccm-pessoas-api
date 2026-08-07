@@ -1,5 +1,6 @@
 package br.com.cc.pessoas.repository.pessoa;
 
+import br.com.cc.pessoas.dto.pessoa.PessoaCpfCnpjCadUnicoDTO;
 import br.com.cc.pessoas.entity.DadosPessoaFisica;
 import br.com.cc.pessoas.entity.DadosPessoaJuridica;
 import br.com.cc.pessoas.entity.Pessoa;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,44 +137,130 @@ public class PessoaRepositoryImpl implements PessoaRepositoryQuery {
     }
 
     @Override
-    public boolean existeCpfCnpjNoCadUnico(
+    @SuppressWarnings("unchecked")
+    public PessoaCpfCnpjCadUnicoDTO existeCpfCnpjNoCadUnico(
             Long cpfCnpj,
             String fisicaJuridica) {
 
         if (cpfCnpj == null || cpfCnpj == 0L) {
-            return false;
+            return new PessoaCpfCnpjCadUnicoDTO(
+                    false,
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
 
-        String documento = String.valueOf(cpfCnpj)
-                .replaceAll("\\D", "");
+        List<Object[]> resultado;
 
-        if (documento.length() <= 11) {
+        if ("F".equalsIgnoreCase(fisicaJuridica)) {
 
-            String cpf = String.format("%011d", cpfCnpj);
+            String cpf = String.format(
+                    "%011d",
+                    cpfCnpj
+            );
 
-            Long quantidade = ((Number) manager.createNativeQuery("""
-                    select count(1)
-                      from DBO_CCM_PESSOAS.DADOS_PF dpf
-                     where dpf.CPF = :cpf
-                    """)
-                    .setParameter("cpf", cpf)
-                    .getSingleResult())
-                    .longValue();
+            resultado = manager.createNativeQuery("""
+            select
+                p.id,
+                p.nome,
+                dpf.cpf,
+                dpf.data_nascimento
+              from DBO_CCM_PESSOAS.DADOS_PF dpf
+              join DBO_CCM_PESSOAS.PESSOAS p
+                on p.id = dpf.id
+             where dpf.cpf = :cpf
+               and rownum = 1
+        """)
+                    .setParameter(
+                            "cpf",
+                            cpf
+                    )
+                    .getResultList();
 
-            return quantidade > 0;
+        } else if ("J".equalsIgnoreCase(fisicaJuridica)) {
+
+            String cnpj = String.format(
+                    "%014d",
+                    cpfCnpj
+            );
+
+            resultado = manager.createNativeQuery("""
+            select
+                p.id,
+                p.nome,
+                dpj.cnpj,
+                cast(null as timestamp) as data_nascimento
+              from DBO_CCM_PESSOAS.DADOS_PJ dpj
+              join DBO_CCM_PESSOAS.PESSOAS p
+                on p.id = dpj.pessoa_id
+             where dpj.cnpj = :cnpj
+               and rownum = 1
+        """)
+                    .setParameter(
+                            "cnpj",
+                            cnpj
+                    )
+                    .getResultList();
+
+        } else {
+
+            return new PessoaCpfCnpjCadUnicoDTO(
+                    false,
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
 
-        String cnpj = String.format("%014d", cpfCnpj);
+        if (resultado.isEmpty()) {
+            return new PessoaCpfCnpjCadUnicoDTO(
+                    false,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
 
-        Long quantidade = ((Number) manager.createNativeQuery("""
-                select count(1)
-                  from DBO_CCM_PESSOAS.DADOS_PJ dpj
-                 where dpj.CNPJ = :cnpj
-                """)
-                .setParameter("cnpj", cnpj)
-                .getSingleResult())
-                .longValue();
+        Object[] registro = resultado.get(0);
 
-        return quantidade > 0;
+        Long pessoaId =
+                registro[0] == null
+                        ? null
+                        : ((Number) registro[0]).longValue();
+
+        String nome =
+                registro[1] == null
+                        ? null
+                        : registro[1].toString();
+
+        String documento =
+                registro[2] == null
+                        ? null
+                        : registro[2].toString();
+
+        LocalDateTime dataNascimento = null;
+
+        if (registro[3] instanceof java.sql.Timestamp timestamp) {
+            dataNascimento =
+                    timestamp.toLocalDateTime();
+        }
+
+        if (registro[3] instanceof java.sql.Date data) {
+            dataNascimento =
+                    data.toLocalDate()
+                            .atStartOfDay();
+        }
+
+        return new PessoaCpfCnpjCadUnicoDTO(
+                true,
+                pessoaId,
+                nome,
+                documento,
+                dataNascimento
+        );
     }
 }

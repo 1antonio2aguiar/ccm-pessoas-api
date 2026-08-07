@@ -1,8 +1,8 @@
 package br.com.cc.pessoas.unificacao.pesRepository.pesBairro;
 
-import br.com.cc.pessoas.unificacao.pesEntity.PesBairro;
-import br.com.cc.pessoas.unificacao.pesEntity.PesBairro_;
-import br.com.cc.pessoas.unificacao.pesFilter.PesBairroFilter;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesBairro;
+import br.com.cc.pessoas.unificacao.pessoa.pesEntity.PesBairro_;
+import br.com.cc.pessoas.unificacao.pessoa.pesFilter.PesBairroFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;

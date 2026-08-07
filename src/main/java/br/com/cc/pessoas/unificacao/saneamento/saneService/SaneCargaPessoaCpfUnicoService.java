@@ -61,9 +61,28 @@ public class SaneCargaPessoaCpfUnicoService {
             throw new IllegalArgumentException("CPF não é único no saneamento.");
         }
 
-        Long novoPessoaId = helper.getNextVal("DBO_CCM_PESSOAS.SEQ_PESSOAS");
+        String cpf =
+                helper.normalizarCpf(
+                        cpfNumerico
+                );
 
-        String cpf = helper.normalizarCpf(cpfNumerico);
+        Long cpfJaExiste =
+                helper.count("""
+            select count(1)
+              from dbo_ccm_pessoas.dados_pf dpf
+             where trim(dpf.cpf) = :cpf
+        """, "cpf", cpf);
+
+        if (cpfJaExiste > 0) {
+            return "Pessoa não processada porque o CPF "
+                    + "já existe no Cadastro Único.";
+        }
+
+        Long novoPessoaId =
+                helper.getNextVal(
+                        "DBO_CCM_PESSOAS.SEQ_PESSOAS"
+        );
+
         Long tipoPessoaId = helper.converterTipoPessoa(helper.num(sane[13]));
         Integer estadoCivil = helper.mapearEstadoCivil(helper.str(sane[6]));
         Long cidadeNascimentoCcm = helper.buscarCidadeNascimentoCcmSane(helper.num(sane[8]));
