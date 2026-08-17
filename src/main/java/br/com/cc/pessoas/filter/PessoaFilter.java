@@ -15,6 +15,7 @@ public class PessoaFilter {
     private String nome;
     private String cpf;
     private String cnpj;
+    private String nomeProprietario;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) // yyyy-MM-dd
     private LocalDate dataNascimento;

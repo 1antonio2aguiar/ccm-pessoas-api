@@ -8,5 +8,7 @@ import java.util.List;
 
 public interface DocumentoRepository extends JpaRepository<Documento, Long>, DocumentoRepositoryQuery {
     List<Documento> findByPessoaId(Long pessoaId);
-
+    List<Documento> findByDadosPessoaJuridicaId(
+            Long dadosPessoaJuridicaId
+    );
 }

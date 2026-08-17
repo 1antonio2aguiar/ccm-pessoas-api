@@ -204,6 +204,46 @@ public class PesPessoaController {
                     );
         }
     }
+
+    @PostMapping(
+            "/cpf-duplicado/nao-migrar/{pessoaId}"
+    )
+    public ResponseEntity<String>
+    registrarGrupoCpfDuplicadoNaoMigrar(
+            @PathVariable Long pessoaId) {
+
+        try {
+
+            cpfDuplicadoService
+                    .registrarGrupoNaoMigrar(
+                            pessoaId
+                    );
+
+            return ResponseEntity.ok(
+                    "Grupo de CPF duplicado retirado "
+                            + "da lista de migração."
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Erro ao registrar a decisão de não migrar "
+                            + "o grupo de CPF duplicado da pessoa {}.",
+                    pessoaId,
+                    e
+            );
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.UNPROCESSABLE_ENTITY
+                    )
+                    .body(
+                            "Não foi possível retirar o grupo "
+                                    + "da lista de migração. "
+                                    + obterMensagemErro(e)
+                    );
+        }
+    }
     @GetMapping("/cnpj-unico-nao-migradas")
     public Page<PesPessoaDTO> filtrarCnpjUnicoNaoMigradas(
             @ModelAttribute PesPessoaFilter filter,

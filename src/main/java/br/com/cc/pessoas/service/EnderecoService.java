@@ -94,6 +94,32 @@ public class EnderecoService {
                 .map(EnderecoDTO::fromEndereco)
                 .toList();
     }
+    @Transactional(readOnly = true)
+    public List<EnderecoDTO> findEnderecosByEstabelecimentoId(
+            Long dadosPessoaJuridicaId) {
+
+        DadosPessoaJuridica estabelecimento =
+                manager.find(
+                        DadosPessoaJuridica.class,
+                        dadosPessoaJuridicaId
+                );
+
+        if (estabelecimento == null) {
+            throw new ObjectNotFoundException(
+                    "Estabelecimento com ID "
+                            + dadosPessoaJuridicaId
+                            + " não encontrado."
+            );
+        }
+
+        return enderecoRepository
+                .findByDadosPessoaJuridicaId(
+                        dadosPessoaJuridicaId
+                )
+                .stream()
+                .map(EnderecoDTO::fromEndereco)
+                .toList();
+    }
 
     // =========================================================
     // INSERT
@@ -141,7 +167,7 @@ public class EnderecoService {
     // UPDATE
     // =========================================================
 
-    @Transactional
+    /*@Transactional
     public EnderecoDTO update(
             Long id,
             EnderecoUpdateDTO dados) {
@@ -177,6 +203,59 @@ public class EnderecoService {
                 enderecoRepository.saveAndFlush(endereco);
 
         return EnderecoDTO.fromEndereco(enderecoAtualizado);
+    }*/
+
+    @Transactional
+    public EnderecoDTO update(
+            Long id,
+            EnderecoUpdateDTO dados) {
+
+        Endereco endereco = buscarEndereco(id);
+
+        Pessoa pessoa = endereco.getPessoa();
+
+        endereco.setDadosPessoaJuridica(
+                buscarEstabelecimentoDaPessoa(
+                        dados.dadosPessoaJuridicaId(),
+                        pessoa
+                )
+        );
+
+        /*
+         * Deve acontecer antes de preencher o endereço atual.
+         * Assim, o UPDATE nativo desmarca os endereços do mesmo
+         * titular e, depois, o endereço atual recebe "S".
+         */
+        if ("S".equalsIgnoreCase(dados.principal())) {
+            desmarcarPrincipalDoMesmoTitular(endereco);
+        }
+
+        preencherDadosBasicos(
+                endereco,
+                dados.numero(),
+                dados.principal(),
+                dados.tipoEndereco(),
+                dados.complemento()
+        );
+
+        endereco.setCep(
+                buscarCep(dados.cepId())
+        );
+
+        endereco.setLogradouro(
+                buscarLogradouro(dados.logradouroId())
+        );
+
+        endereco.setBairro(
+                buscarBairro(dados.bairroId())
+        );
+
+        Endereco enderecoAtualizado =
+                enderecoRepository.saveAndFlush(endereco);
+
+        return EnderecoDTO.fromEndereco(
+                enderecoAtualizado
+        );
     }
 
     // =========================================================

@@ -79,6 +79,32 @@ public class ContatoService {
                 .map(ContatoDTO::fromContato)
                 .toList();
     }
+    @Transactional(readOnly = true)
+    public List<ContatoDTO> findContatosByEstabelecimentoId(
+            Long dadosPessoaJuridicaId) {
+
+        DadosPessoaJuridica estabelecimento =
+                manager.find(
+                        DadosPessoaJuridica.class,
+                        dadosPessoaJuridicaId
+                );
+
+        if (estabelecimento == null) {
+            throw new ObjectNotFoundException(
+                    "Estabelecimento com ID "
+                            + dadosPessoaJuridicaId
+                            + " não encontrado."
+            );
+        }
+
+        return contatoRepository
+                .findByDadosPessoaJuridicaId(
+                        dadosPessoaJuridicaId
+                )
+                .stream()
+                .map(ContatoDTO::fromContato)
+                .toList();
+    }
 
     // =========================================================
     // INSERT

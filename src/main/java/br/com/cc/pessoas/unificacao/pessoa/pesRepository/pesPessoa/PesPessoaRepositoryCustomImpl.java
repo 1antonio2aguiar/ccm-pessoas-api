@@ -72,6 +72,14 @@ public class PesPessoaRepositoryCustomImpl implements PesPessoaRepositoryCustom 
                  where cup.cd_origem = p.pessoa
                    and cup.banco = 'PESSOAS'
           )
+          
+          and not exists (
+                 select 1
+                  from dbo_ccm_pessoas.controle_migracao_pessoa cmp
+                 where cmp.cd_origem = p.pessoa
+                   and cmp.banco = 'PESSOAS'
+                   and cmp.status_migracao = 'N'
+          )
 
           /*
            * CPF não está repetido na origem.
@@ -946,6 +954,13 @@ public class PesPessoaRepositoryCustomImpl implements PesPessoaRepositoryCustom 
                       from dbo_ccm_pessoas.cad_unico_pessoa cup
                      where cup.cd_origem = p.pessoa
                        and cup.banco = 'PESSOAS'
+              )
+              and not exists (
+                    select 1
+                      from dbo_ccm_pessoas.controle_migracao_pessoa cmp
+                     where cmp.cd_origem = p.pessoa
+                       and cmp.banco = 'PESSOAS'
+                       and cmp.status_migracao = 'N'
               )
               and exists (
                     select 1

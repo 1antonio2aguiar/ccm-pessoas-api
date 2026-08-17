@@ -12,9 +12,10 @@ import java.util.List;
 public interface EnderecoRepository extends JpaRepository<Endereco, Long>, EnderecoRepositoryQuery {
     //Optional<Endereco> findByCepId(String cep);
     List<Endereco> findByPessoaId(Long pessoaId);
-
-
     @Modifying
     @Query("UPDATE Endereco e SET e.principal = 'N' WHERE e.pessoa.id = :pessoaId")
     int marcarTodosComoNaoPrincipalParaPessoa(@Param("pessoaId") Long pessoaId);
+    List<Endereco> findByDadosPessoaJuridicaId(
+            Long dadosPessoaJuridicaId
+    );
 }

@@ -81,6 +81,18 @@ public class EnderecoController {
                 enderecoService.findEnderecosByPessoaId(pessoaId)
         );
     }
+    @GetMapping("/por-estabelecimento/{dadosPessoaJuridicaId}")
+    public ResponseEntity<List<EnderecoDTO>>
+    findEnderecosPorEstabelecimento(
+            @PathVariable Long dadosPessoaJuridicaId) {
+
+        return ResponseEntity.ok(
+                enderecoService
+                        .findEnderecosByEstabelecimentoId(
+                                dadosPessoaJuridicaId
+                        )
+        );
+    }
 
     // =========================================================
     // INSERT

@@ -4,13 +4,62 @@ import br.com.cc.pessoas.unificacao.rh.rhEntity.RhPessoa;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import br.com.cc.pessoas.unificacao.controle.ctrlService.ControleMigracaoPessoaService;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Service
 public class RhCargaPessoaCpfDuplicadoService extends RhCargaPessoaUnicoBaseService {
+    private final ControleMigracaoPessoaService
+            controleMigracaoPessoaService;
 
+    public RhCargaPessoaCpfDuplicadoService(
+            ControleMigracaoPessoaService
+                    controleMigracaoPessoaService) {
+
+        this.controleMigracaoPessoaService =
+                controleMigracaoPessoaService;
+    }
+    /*
+     * Registra como "não migrar" todos os integrantes
+     * do grupo de CPF duplicado do RH.
+     */
+    @Transactional
+    public void registrarGrupoNaoMigrar(
+            Long pessoaId) {
+
+        if (pessoaId == null
+                || pessoaId <= 0L) {
+
+            throw new IllegalArgumentException(
+                    "Código da pessoa do RH inválido."
+            );
+        }
+
+        List<Long> codigosOrigem =
+                rhPessoaRepository
+                        .buscarGrupoDuplicadoCpfRh(
+                                pessoaId
+                        );
+
+        if (codigosOrigem == null
+                || codigosOrigem.size() < 2) {
+
+            throw new IllegalArgumentException(
+                    "Não foi encontrado um grupo de CPF "
+                            + "duplicado para a pessoa "
+                            + pessoaId + "."
+            );
+        }
+
+        controleMigracaoPessoaService
+                .registrarGrupoNaoMigrar(
+                        "RH",
+                        codigosOrigem
+                );
+    }
     @Override
     protected String getFisicaJuridica() {
         return "F";

@@ -1,6 +1,6 @@
 package br.com.cc.pessoas.unificacao.saneamento.saneService;
 
-import br.com.cc.pessoas.entity.enuns.TipoDocumento;
+import br.com.cc.pessoas.unificacao.controle.ctrlService.ControleMigracaoPessoaService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
@@ -20,7 +20,7 @@ public class SaneCargaPessoaCpfDuplicadoService {
     private EntityManager manager;
 
     private final SaneCargaPessoaHelperService helper;
-
+    private final ControleMigracaoPessoaService controleMigracaoPessoaService;
     @Transactional
     public String processarPessoaDuplicada(
             Long pessoaId) {
@@ -39,6 +39,89 @@ public class SaneCargaPessoaCpfDuplicadoService {
                 pessoaId,
                 true
         );
+    }
+    /*
+     * Registra como "não migrar" todos os integrantes
+     * do grupo de CPF duplicado do Saneamento.
+     */
+    @Transactional
+    public void registrarGrupoNaoMigrar(
+            Long pessoaId) {
+
+        if (pessoaId == null
+                || pessoaId <= 0L) {
+
+            throw new IllegalArgumentException(
+                    "Código da pessoa do saneamento inválido."
+            );
+        }
+
+        Object[] saneBase =
+                buscarPessoaSane(
+                        pessoaId
+                );
+
+        String fisicaJuridica =
+                helper.str(
+                        saneBase[2]
+                );
+
+        Long cpfNumerico =
+                helper.num(
+                        saneBase[3]
+                );
+
+        if (!"F".equalsIgnoreCase(
+                fisicaJuridica
+        )) {
+
+            throw new IllegalArgumentException(
+                    "Pessoa SANE não é pessoa física."
+            );
+        }
+
+        if (cpfNumerico == null
+                || cpfNumerico == 0L) {
+
+            throw new IllegalArgumentException(
+                    "Pessoa SANE não possui CPF válido."
+            );
+        }
+
+        String nomeBase =
+                helper.str(
+                        saneBase[1]
+                );
+
+        List<Object[]> grupo =
+                buscarGrupoCpfDuplicado(
+                        cpfNumerico,
+                        nomeBase
+                );
+
+        if (grupo == null
+                || grupo.size() <= 1) {
+
+            throw new IllegalArgumentException(
+                    "CPF não é duplicado no saneamento."
+            );
+        }
+
+        List<Long> codigosOrigem =
+                grupo.stream()
+                        .map(
+                                sane ->
+                                        helper.num(
+                                                sane[0]
+                                        )
+                        )
+                        .toList();
+
+        controleMigracaoPessoaService
+                .registrarGrupoNaoMigrar(
+                        "SANE",
+                        codigosOrigem
+                );
     }
 
     private String processarGrupoCpfDuplicado(

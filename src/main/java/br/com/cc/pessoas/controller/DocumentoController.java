@@ -64,7 +64,18 @@ public class DocumentoController {
                 )
         );
     }
+    @GetMapping("/por-estabelecimento/{dadosPessoaJuridicaId}")
+    public ResponseEntity<List<DocumentoDTO>>
+    findDocumentosPorEstabelecimento(
+            @PathVariable Long dadosPessoaJuridicaId) {
 
+        return ResponseEntity.ok(
+                documentoService
+                        .findDocumentosByEstabelecimentoId(
+                                dadosPessoaJuridicaId
+                        )
+        );
+    }
     @PostMapping
     public ResponseEntity<DocumentoDTO> insert(
             @RequestBody @Valid DocumentoCreateDTO dados) {
@@ -92,13 +103,14 @@ public class DocumentoController {
             @PathVariable Long id,
             @RequestBody @Valid DocumentoUpdateDTO dados) {
 
-        var documentoSalvo =
-                documentoService.update(id, dados);
+        DocumentoDTO documentoAtualizado =
+                documentoService.update(
+                        id,
+                        dados
+                );
 
         return ResponseEntity.ok(
-                DocumentoDTO.fromDocumento(
-                        documentoSalvo
-                )
+                documentoAtualizado
         );
     }
 

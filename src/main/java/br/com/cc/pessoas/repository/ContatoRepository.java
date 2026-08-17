@@ -14,6 +14,9 @@ public interface ContatoRepository
         extends JpaRepository<Contato, Long>, ContatoRepositoryQuery {
 
     List<Contato> findByPessoaId(Long pessoaId);
+    List<Contato> findByDadosPessoaJuridicaId(
+            Long dadosPessoaJuridicaId
+    );
 
     @Modifying
     @Query("""

@@ -77,6 +77,32 @@ public class DocumentoService {
                 .map(DocumentoDTO::fromDocumento)
                 .toList();
     }
+    @Transactional(readOnly = true)
+    public List<DocumentoDTO> findDocumentosByEstabelecimentoId(
+            Long dadosPessoaJuridicaId) {
+
+        DadosPessoaJuridica estabelecimento =
+                manager.find(
+                        DadosPessoaJuridica.class,
+                        dadosPessoaJuridicaId
+                );
+
+        if (estabelecimento == null) {
+            throw new ObjectNotFoundException(
+                    "Estabelecimento com ID "
+                            + dadosPessoaJuridicaId
+                            + " não encontrado."
+            );
+        }
+
+        return documentoRepository
+                .findByDadosPessoaJuridicaId(
+                        dadosPessoaJuridicaId
+                )
+                .stream()
+                .map(DocumentoDTO::fromDocumento)
+                .toList();
+    }
 
     @Transactional
     public Documento insert(
@@ -104,6 +130,39 @@ public class DocumentoService {
     }
 
     @Transactional
+    public DocumentoDTO update(
+            Long id,
+            DocumentoUpdateDTO dados) {
+
+        Documento documento =
+                buscarDocumento(id);
+
+        Pessoa pessoa =
+                documento.getPessoa();
+
+        documento.setDadosPessoaJuridica(
+                buscarEstabelecimentoDaPessoa(
+                        dados.dadosPessoaJuridicaId(),
+                        pessoa
+                )
+        );
+
+        preencherDadosDocumento(
+                documento,
+                dados
+        );
+
+        Documento documentoAtualizado =
+                documentoRepository.saveAndFlush(
+                        documento
+                );
+
+        return DocumentoDTO.fromDocumento(
+                documentoAtualizado
+        );
+    }
+
+    /*@Transactional
     public Documento update(
             Long id,
             DocumentoUpdateDTO dados) {
@@ -125,7 +184,7 @@ public class DocumentoService {
         );
 
         return documentoRepository.save(documento);
-    }
+    }*/
 
     @Transactional
     public void delete(Long id) {

@@ -68,6 +68,13 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                                      where cup_sane.cd_origem = p.pessoa
                                        and cup_sane.banco = 'SANE'
                                )
+                               and not exists (
+                                select 1
+                                  from dbo_ccm_pessoas.controle_migracao_pessoa cmp
+                                 where cmp.cd_origem = p.pessoa
+                                   and cmp.banco = 'SANE'
+                                   and cmp.status_migracao = 'N'
+                               )
 
                                and not exists (
                                     select 1
@@ -279,6 +286,14 @@ public class SanePessoaRepositoryCustomImpl implements SanePessoaRepositoryCusto
                                   from dbo_ccm_pessoas.cad_unico_pessoa cup_sane
                                  where cup_sane.cd_origem = p.pessoa
                                    and cup_sane.banco = 'SANE'
+                           )
+                           
+                           and not exists (
+                                select 1
+                                  from dbo_ccm_pessoas.controle_migracao_pessoa cmp
+                                 where cmp.cd_origem = p.pessoa
+                                   and cmp.banco = 'SANE'
+                                   and cmp.status_migracao = 'N'
                            )
 
                            and not exists (

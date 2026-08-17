@@ -48,4 +48,18 @@ public class RhPessoaController {
         rhCargaPessoaCnpjUnicoService.processarPessoaUnica(pessoaId);
         return "Pessoa jurídica única do RH processada com sucesso.";
     }
+    @PostMapping(
+            "/cpf-duplicado/nao-migrar/{pessoaId}"
+    )
+    public String registrarGrupoCpfDuplicadoNaoMigrar(
+            @PathVariable Long pessoaId) {
+
+        rhCargaPessoaCpfDuplicadoService
+                .registrarGrupoNaoMigrar(
+                        pessoaId
+                );
+
+        return "Grupo de CPF duplicado retirado "
+                + "da lista de migração.";
+    }
 }

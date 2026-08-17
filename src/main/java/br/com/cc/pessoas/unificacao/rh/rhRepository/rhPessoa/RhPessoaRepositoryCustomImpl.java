@@ -27,15 +27,31 @@ public class RhPessoaRepositoryCustomImpl implements RhPessoaRepositoryCustom {
         StringBuilder fromWhere = new StringBuilder();
 
         fromWhere.append("""
-            from dbo_rh.pessoas p
-            where p.fisica_juridica = 'F'
-              and not exists (
-                    select 1
-                      from dbo_ccm_pessoas.cad_unico_pessoa cup_rh
-                     where cup_rh.cd_origem = p.pessoa
-                       and cup_rh.banco = 'RH'
-              )
+           from dbo_rh.pessoas p
+           where p.fisica_juridica = 'F'
+           
+             /*
+              * Ainda não foi migrada.
+              */
+             and not exists (
+                   select 1
+                     from dbo_ccm_pessoas.cad_unico_pessoa cup_rh
+                    where cup_rh.cd_origem = p.pessoa
+                      and cup_rh.banco = 'RH'
+             )
+           
+             /*
+              * Não foi recusada pelo usuário.
+              */
+             and not exists (
+                   select 1
+                     from dbo_ccm_pessoas.controle_migracao_pessoa cmp
+                    where cmp.cd_origem = p.pessoa
+                      and cmp.banco = 'RH'
+                      and cmp.status_migracao = 'N'
+             )
         """);
+
 
         /*if (StringUtils.hasText(filter.getFisicaJuridica())) {
             fromWhere.append(" and p.fisica_juridica = :fisicaJuridica ");

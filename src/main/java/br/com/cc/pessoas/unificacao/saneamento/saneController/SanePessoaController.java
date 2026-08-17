@@ -75,4 +75,22 @@ public class SanePessoaController {
                         )
         );
     }
+
+    @PostMapping(
+            "/cpf-duplicado/nao-migrar/{pessoaId}"
+    )
+    public ResponseEntity<String>
+    registrarGrupoCpfDuplicadoNaoMigrar(
+            @PathVariable Long pessoaId) {
+
+        saneCargaPessoaCpfDuplicadoService
+                .registrarGrupoNaoMigrar(
+                        pessoaId
+                );
+
+        return ResponseEntity.ok(
+                "Grupo de CPF duplicado retirado "
+                        + "da lista de migração."
+        );
+    }
 }

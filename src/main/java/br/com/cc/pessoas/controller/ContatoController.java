@@ -56,6 +56,18 @@ public class ContatoController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // Ou uma mensagem de erro
         }
     }
+    @GetMapping("/por-estabelecimento/{dadosPessoaJuridicaId}")
+    public ResponseEntity<List<ContatoDTO>>
+    findContatosPorEstabelecimento(
+            @PathVariable Long dadosPessoaJuridicaId) {
+
+        return ResponseEntity.ok(
+                contatoService
+                        .findContatosByEstabelecimentoId(
+                                dadosPessoaJuridicaId
+                        )
+        );
+    }
 
     // Inserir
     @PostMapping
