@@ -41,7 +41,7 @@ public abstract class PesPessoaBaseService {
 
         return ((Number) manager
                 .createNativeQuery(
-                        "select " + sequence + ".nextval from dual")
+                        "select DBO_CCM_PESSOAS." + sequence + ".nextval from dual")
                 .getSingleResult())
                 .longValue();
     }

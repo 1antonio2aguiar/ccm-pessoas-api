@@ -39,4 +39,7 @@ public class Cidade {
 
     @Column(name = "CODIGO_INEP")
     private Long codigoInep;
+
+    @Column(name = "CEP")
+    private Long cep;
 }

@@ -8,17 +8,15 @@ public record CidadeUpdateDTO(
 
         @NotNull
         Long estadoId,
-
         @NotBlank
         @Size(max = 255)
         String nome,
-
         @Size(max = 20)
         String sigla,
-
         Long codigoSicom,
         Long codigoIbge,
-        Long codigoInep
+        Long codigoInep,
+        Long cep
 ) {
 
     public String getNome() {

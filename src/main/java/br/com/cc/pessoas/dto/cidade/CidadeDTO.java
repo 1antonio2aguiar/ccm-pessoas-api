@@ -11,7 +11,8 @@ public record CidadeDTO(
         String sigla,
         Long codigoSicom,
         Long codigoIbge,
-        Long codigoInep
+        Long codigoInep,
+        Long cep
 ) {
 
     public static CidadeDTO fromCidade(Cidade cidade) {
@@ -26,7 +27,8 @@ public record CidadeDTO(
                 cidade.getSigla(),
                 cidade.getCodigoSicom(),
                 cidade.getCodigoIbge(),
-                cidade.getCodigoInep()
+                cidade.getCodigoInep(),
+                cidade.getCep()
         );
     }
 }

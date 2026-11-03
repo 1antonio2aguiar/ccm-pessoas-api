@@ -21,6 +21,7 @@ public class Pessoa {
     @SequenceGenerator(
             name = "pessoa_seq",
             sequenceName = "SEQ_PESSOAS",
+            schema = "DBO_CCM_PESSOAS",
             allocationSize = 1
     )
     private Long id;

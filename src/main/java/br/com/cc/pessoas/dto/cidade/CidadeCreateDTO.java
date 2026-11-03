@@ -8,13 +8,12 @@ public record CidadeCreateDTO(
 
         @NotNull
         Long estadoId,
-
         @NotBlank
         @Size(max = 255)
         String nome,
-
         @Size(max = 20)
-        String sigla
+        String sigla,
+        Long cep
 
 ) {
 
