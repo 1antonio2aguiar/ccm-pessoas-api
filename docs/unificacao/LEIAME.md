@@ -1,4 +1,7 @@
-# Unificação de Endereços — pacote de implementação (v6)
+# Unificação de Endereços — pacote de implementação (v7)
+
+**Novo na v7:** tela de **Carga final** (fase 3), que substitui `SP_CARGA_ENDERECOS` e `SP_CARGA_CEPS`, e o script `11_carga_final_enderecos.sql`. Detalhes no fim deste arquivo.
+
 
 **Novo na v6:**
 - unificação de **Logradouros**, com escolha de CEP válido para logradouro novo;
@@ -18,7 +21,7 @@ O pacote traz de novo cidades, distritos e bairros. Bairros não mudou desde a v
 | 1. Unificação | Bairros | `SP_BAIRROS_GERA_UNIFICADO` | 04 |
 | 1. Unificação | Logradouros | `SP_LOGRADOUROS_SEPARA_NOME*`, `SP_LOGRADOUROS_GERA_UNIFICADO`, `SP_LOGRADOUROS_GERA_UNI_ESCOLA` | 06 |
 | 2. Consolidação | Consolidação | `SP_CIDADES_`, `SP_DISTRITOS_`, `SP_BAIRROS_`, `SP_LOGRADOUROS_`, `SP_CEPS_UNIFICA` | 07 |
-| 3. Tabelas finais | (v7) | `SP_CARGA_ENDERECOS`, `SP_CARGA_CEPS` | — |
+| 3. Tabelas finais | Carga final | `SP_CARGA_ENDERECOS`, `SP_CARGA_CEPS` | 11 |
 
 O script `05` é só de conferência e pode ser rodado a qualquer momento.
 
@@ -33,7 +36,7 @@ O resultado é o mesmo do processamento um a um. Se algo falhar, nada é gravado
 
 **Correção v6.3 ("Recomeçar do zero" de logradouros):** passava de 20 minutos porque apagava e reinseria as 1,3 milhão de linhas, recalculando as chaves. Agora o zerar desfaz só os vínculos: zera os códigos das origens e os complementos nas linhas que tinham algo, apaga o controle, as linhas sem código dos Correios e as repetidas. Os logradouros dos Correios e as chaves ficam. Rode também o `09_logradouros_desempenho.sql`, que põe cache nas sequences e atualiza as estatísticas.
 
-Para começar do zero: em cada tela, na ordem cidades → distritos → bairros → logradouros, clique em **Recomeçar do zero**, vincule os únicos e resolva o resto. Depois rode **Consolidar tudo**.
+Para começar do zero: em cada tela, na ordem cidades → distritos → bairros → logradouros, clique em **Recomeçar do zero**, vincule os únicos e resolva o resto. Depois rode **Consolidar tudo** e, por fim, **Carregar tudo** na Carga final.
 
 Para só acrescentar novos: o mesmo caminho, mas com **Gerar base / Completar base** no lugar de "Recomeçar do zero".
 
@@ -512,3 +515,72 @@ Base: `/consolidacao-enderecos`. `{nivel}` = `CIDADES`, `DISTRITOS`, `BAIRROS`, 
 
 1. **Linhas existentes não são sobrescritas.** Se um nome foi corrigido na unificação depois da primeira consolidação, a correção não vai para a consolidada. A seção 2 do script 07 mostra as diferenças de nome em logradouros.
 2. **Tempo.** Logradouros e CEPs passam de 1 milhão de linhas. Se houver proxy ou timeout HTTP entre a tela e a API, ele precisa aguentar alguns minutos.
+
+
+---
+
+# Carga final (novo na v7)
+
+## Aplicar
+
+1. **Banco:** rode `sql/11_carga_final_enderecos.sql`.
+   - **Seção 0 primeiro.** Ela conta quantos registros da consolidada estão sem `CODIGO_CCM`. O normal é um número pequeno: só o que entrou de novo pela unificação e pela consolidação.
+   - Seção 1: grants.
+   - Seção 2: confere se as sequences estão à frente dos IDs que já existem.
+   - Seção 3: índice para reaproveitar bairro pelo nome.
+   - Seção 4: conferências depois da carga.
+2. **API:** a pasta `unificacao/cargafinal` é nova.
+3. **UI:** o menu fica em **Atividades → Unifica Endereços → Carga final**.
+
+## O que a tela faz
+
+Para cada nível (cidades, distritos, bairros, logradouros e CEPs), mostra:
+- quantas linhas estão na consolidada;
+- quantas já têm `CODIGO_CCM`;
+- quantas estão prontas para carregar;
+- quantas estão bloqueadas, porque o nível de cima ainda não foi carregado;
+- quantas têm código mas faltam numa das tabelas finais.
+
+**Carregar** roda o nível inteiro numa transação, nos dois schemas:
+1. dá um código novo, das mesmas sequences das procedures, a quem está sem `CODIGO_CCM`, e grava esse código na consolidada;
+2. insere em `DBO_CC_ENDERECOS` e em `DBO_CCM_PESSOAS` com o **mesmo ID**, incluindo `DADOS_BAIRROS`, `DADOS_LOGRADOUROS`, `LOGRADOUROS_CEPS` e `BAIRROS_CEPS`;
+3. completa as linhas que têm código mas não existem na tabela final.
+
+O que já tem código **nunca muda**, porque os endereços das pessoas apontam para esses IDs. E **nada é apagado**.
+
+**Trava:** se mais de 20% de um nível estiver sem `CODIGO_CCM`, a carga não roda. Isso indicaria que o código foi apagado, e a carga criaria IDs duplicados para endereços que já existem.
+
+## Correções em relação às procedures
+
+| Procedure | Problema | Na tela |
+|---|---|---|
+| `SP_CARGA_ENDERECOS` | Filtro de teste `upper(nome) like 'bairro 9%'` esquecido: só carregava parte dos bairros | Sem filtro |
+| `SP_CARGA_ENDERECOS` | Tipo de logradouro por `INSTR` com IDs fixos: RODOVIA virava RUA (36), POV virava PRAÇA (29) | Tipo pela tabela `TIPOS_LOGRADOUROS`, pela descrição normalizada; se não achar, `NEC` |
+| `SP_CARGA_ENDERECOS` | Bairro com o mesmo nome no mesmo distrito era pulado e ficava sem `CODIGO_CCM` | Reaproveita o ID do bairro que já existe |
+| `SP_CARGA_ENDERECOS` | `exit` no primeiro distrito não encontrado interrompia a carga inteira | O registro fica como bloqueado e o resto carrega |
+| `SP_CARGA_CEPS` | Pulava qualquer CEP cujo número já existisse, mesmo de outro logradouro | Compara logradouro + CEP + número inicial |
+| `SP_CARGA_CEPS` | Cidade 6160 excluída fixo no código | Sem exclusão |
+| Ambas | Laço linha a linha com commit parcial: um erro no meio deixava a carga pela metade | SQL de conjunto, uma transação por nível |
+
+Mantido igual às procedures:
+- o ID da cidade é o código dos Correios;
+- `ESTADO` vem de `DBO_CC_ENDERECOS.ESTADOS`, pela sigla;
+- o bairro do CEP é buscado pelo código ou, se não houver, pelo nome do bairro dos Correios (`PR_BUSCA_BAIRRO`);
+- CEP sem bairro carregado não entra;
+- o CEP é gravado como texto do número, como hoje.
+
+## Endpoints
+
+Base: `/carga-final-enderecos`. `{nivel}` = `CIDADES`, `DISTRITOS`, `BAIRROS`, `LOGRADOUROS` ou `CEPS`.
+
+| Método | Caminho | O que faz |
+|---|---|---|
+| GET | `/niveis` | Lista os níveis |
+| GET | `/{nivel}/resumo` | Contagens do nível |
+| POST | `/{nivel}/executar` | Carrega um nível |
+| POST | `/executar-todos` | Carrega todos, na ordem |
+
+## Premissas (conferir)
+
+1. **Tipo de logradouro.** A procedure gravava de volta na consolidada a sigla do tipo encontrado (`TIPO_LOGRADOURO`). A tela não regrava esse campo. Se algum processo depender disso, me avise.
+2. **CEP sem zero à esquerda.** O CEP vai como texto do número, igual à procedure (`01001000` vira `1001000`). Isso fica igual ao que já está gravado.
